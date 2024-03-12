@@ -1,3 +1,8 @@
+## 0.0.2
+
+### Maintenance
+* Adding BSD License
+
 ## 0.0.1
 
 Initial release
