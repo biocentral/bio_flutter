@@ -1,7 +1,7 @@
 name: bio_flutter
 description: "Working with biological data in flutter"
 version: 0.0.1
-homepage:
+homepage: https://github.com/SebieF/bio_flutter
 
 environment:
   sdk: '>=3.2.2 <4.0.0'
@@ -9,7 +9,6 @@ environment:
 
 dependencies:
   async: ^2.11.0
-  cross_file: ^0.3.4+1
   equatable: ^2.0.5
   fl_chart: ^0.66.2
   flutter:

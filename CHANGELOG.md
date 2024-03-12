@@ -1,6 +1,7 @@
 ## 0.0.1
 
 Initial release
+
 ### Features
 **Widgets**:
 * UMAP Visualizer
