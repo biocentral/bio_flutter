@@ -19,7 +19,7 @@ Cross-platform representation and visualization of biological data in flutter.
 
 * UMAP Visualizer:
 
-<img src="https://github.com/SebieF/bio_flutter/blob/7933cfc2a3efa2fea7625335aacaafc1e0d38c68/doc/umap_visualizer.gif" 
+<img src="https://github.com/SebieF/bio_flutter/blob/v0.0.3/doc/umap_visualizer.gif?raw=true" 
 alt="An animated image of the UMAP Visualizer widget" height="398" width="816" title="UMAP Visualizer"/>
 
 **Biological Data Classes**:
