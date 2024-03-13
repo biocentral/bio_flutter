@@ -1,4 +1,5 @@
-/// Widgets, file handlers and utilities for working with biological data in flutter.
+/// Widgets, file handlers and utilities for
+/// cross-platform representation and visualization of biological data in flutter.
 library bio_flutter;
 
 export 'src/attributes/custom_attributes.dart';

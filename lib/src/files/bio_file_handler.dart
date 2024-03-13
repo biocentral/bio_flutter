@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:bio_flutter/src/util/web_util.dart';
 import 'package:flutter/foundation.dart';
 import 'package:bio_flutter/bio_flutter.dart';
 import 'package:universal_io/io.dart' show File;

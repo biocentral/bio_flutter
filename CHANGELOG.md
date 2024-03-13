@@ -1,3 +1,10 @@
+## 0.0.3
+
+### Maintenance
+* Fixing image path in README
+* Renaming umap example to example.dart
+* Fixing package description length
+
 ## 0.0.2
 
 ### Maintenance

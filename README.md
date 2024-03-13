@@ -11,7 +11,7 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages).
 -->
 
-Working with biological data in flutter.
+Cross-platform representation and visualization of biological data in flutter.
 
 ## Features
 
@@ -19,7 +19,8 @@ Working with biological data in flutter.
 
 * UMAP Visualizer:
 
-<img src="https://github.com/SebieF/bio_flutter/blob/master/doc/umap_visualizer.gif" alt="An animated image of the UMAP Visualizer widget" height="398" width="816" title="UMAP Visualizer"/>
+<img src="https://github.com/SebieF/bio_flutter/blob/7933cfc2a3efa2fea7625335aacaafc1e0d38c68/doc/umap_visualizer.gif" 
+alt="An animated image of the UMAP Visualizer widget" height="398" width="816" title="UMAP Visualizer"/>
 
 **Biological Data Classes**:
 
@@ -104,5 +105,6 @@ the codebase on GitHub!
 **Current Roadmap**:
 
 * Increase test coverage
+* Improve documentation
 * Support more file formats for all data types
 * Add 3D protein visualization
