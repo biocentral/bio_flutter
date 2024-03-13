@@ -1,3 +1,8 @@
+## 0.0.4
+
+### Maintenance
+* Fixing image path in README
+
 ## 0.0.3
 
 ### Maintenance
