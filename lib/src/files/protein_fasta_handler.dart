@@ -17,8 +17,8 @@ class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
 
     for (String entry in entries) {
       List<String> lines = entry.split("\n");
-      if (lines.length != 2) {
-        throw Exception("Invalid fasta file: Two many lines for entry or missing values or sequence for entry: $entry");
+      if (lines.length < 2) {
+        throw Exception("Invalid fasta file: Too few lines for entry (missing values or sequence) for entry: $entry");
       }
       // Read header
       String header = lines.first;
