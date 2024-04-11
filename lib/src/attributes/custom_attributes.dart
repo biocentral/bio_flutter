@@ -108,6 +108,7 @@ class CustomAttributesExtractor<T extends BiologicalEntity> {
   static const List<String> _commonProteinIdentifiers = ["id", "uniprot", "uniprot_id", "uniprot-id", "pdb", "name"];
   static const List<String> _commonSequenceIdentifiers = ["sequence", "seq"];
   static const List<String> _commonTaxonIdentifiers = ["taxonid", "taxid", "taxonomy", "taxon", "OX"];
+  static const List<String> _commonSpeciesIdentifiers = ["organism", "OS"];
   static const List<String> _commonFamilyIdentifiers = ["family", "viral_family", "Family virus"];
 
   static const List<String> _commonConfidenceScoreIdentifiers = [
@@ -137,7 +138,7 @@ class CustomAttributesExtractor<T extends BiologicalEntity> {
 
   CustomAttributesExtractor? extractAll() {
     if(_protein != null) {
-      return this.extractProteinID().extractSequence().extractTaxonomyID().extractFamilyName();
+      return this.extractProteinID().extractSequence().extractTaxonomyID().extractSpeciesName().extractFamilyName();
     }
     if(_interaction != null) {
       return this.extractExperimentalConfidenceScore();
@@ -193,6 +194,13 @@ class CustomAttributesExtractor<T extends BiologicalEntity> {
         _commonTaxonIdentifiers,
         (extractedID) => _protein?.copyWith(taxonomy: _protein.taxonomy.copyWith(id: extractedID)) as T?,
         (rawValue) => int.tryParse(rawValue));
+  }
+
+  CustomAttributesExtractor<T> extractSpeciesName() {
+    return _extractorFunction<String>(
+        _commonSpeciesIdentifiers,
+            (extractedName) => _protein?.copyWith(taxonomy: _protein.taxonomy.copyWith(name: extractedName)) as T?,
+            (rawValue) => Taxonomy.isValidSpeciesTaxon(rawValue) ? rawValue : null);
   }
 
   CustomAttributesExtractor<T> extractFamilyName() {

@@ -6,15 +6,35 @@ import 'package:bio_flutter/bio_flutter.dart';
 
 void main() {
   group('Protein-Fasta', () {
-    String fastaPath = "test/test_files/sequences.fasta";
-    File temp = File(fastaPath);
+    String sequencesPath = "test/test_files/sequences.fasta";
+    String sequencesOrganismsPath = "test/test_files/sequences_with_organisms.fasta";
+    File sequencesFile = File(sequencesPath);
+    File sequencesOrganismsFile = File(sequencesOrganismsPath);
     test(
         'Protein fasta file can be loaded and contains 4 proteins with sequences, '
         'then can be converted back to string', () async {
       try {
-        BioFileHandlerContext<Protein>? handler = BioFileHandler<Protein>().create(temp.absolute.path);
+        BioFileHandlerContext<Protein>? handler = BioFileHandler<Protein>().create(sequencesFile.absolute.path);
         Map<String, Protein> proteins = await handler.read();
         expect(proteins.length, equals(4));
+        String fastaString = await handler.convertToString(proteins);
+        expect(fastaString.contains(">"), equals(true));
+      } catch (e) {
+        fail("Error was thrown during handler creation! (Error: ${e.toString()})");
+      }
+    });
+    test(
+        'Protein fasta file can be loaded and contains 2 proteins with sequences, '
+        'organism names are found and extracted', () async {
+      try {
+        BioFileHandlerContext<Protein>? handler =
+            BioFileHandler<Protein>().create(sequencesOrganismsFile.absolute.path);
+        Map<String, Protein> proteins = await handler.read();
+        expect(proteins.length, equals(2));
+        Protein p1 = proteins["YP_095982.1"]!;
+        Protein p2 = proteins["YP_096167.1"]!;
+        expect(p1.taxonomy.name, equals("Legionella pneumophila"));
+        expect(p2.taxonomy.name, equals("Legionella pneumophila"));
         String fastaString = await handler.convertToString(proteins);
         expect(fastaString.contains(">"), equals(true));
       } catch (e) {
