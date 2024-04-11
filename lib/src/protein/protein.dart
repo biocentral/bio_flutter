@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:bio_flutter/bio_flutter.dart';
 
-
 /// Representation of a biological protein
 ///
 /// The [id] is a unique string identifier for the protein, it can for example be a refseq, pdb or uniprot id.
@@ -10,7 +9,7 @@ import 'package:bio_flutter/bio_flutter.dart';
 /// The [taxonomy] represents the most important information to classify the protein's species of origin.
 /// The [attributes] are other generic attributes that are not represented by the features above.
 @immutable
-class Protein {
+class Protein extends BiologicalEntity {
   final String id;
   final Sequence sequence;
   final EmbeddingManager embeddings;
@@ -30,19 +29,10 @@ class Protein {
         taxonomy = const Taxonomy.unknown(),
         attributes = const CustomAttributes.empty();
 
-  Protein updateFromMap(Map<String, String> map) {
-    // Using ! is safe in this context because null is only returned if type is not found for Extractor
-    return CustomAttributes(map).extract<Protein>(this)!.extractAll()!.collect();
-  }
-
-  Protein updateFromCustomAttributes(CustomAttributes newAttributes) {
-    // Using ! is safe in this context because null is only returned if type is not found for Extractor
-    return newAttributes.extract<Protein>(this)!.extractAll()!.collect();
-  }
-
   static Protein fromMap(Map<String, String> map) {
     // Using ! is safe in this context because null is only returned if type is not found for Extractor
-    return CustomAttributes(map).extract<Protein>(const Protein.empty())!.extractAll()!.collect();
+    return (CustomAttributes(map).extract(const Protein.empty())!.extractAll()!.collect<Protein>() ??
+        const Protein.empty());
   }
 
   Protein copyWith({id, sequence, embeddings, taxonomy, attributes}) {
@@ -58,7 +48,12 @@ class Protein {
   /// Merging is only allowed if both proteins have the same [id].
   /// If [failOnConflict] is false, the value of this protein will be preferred over the other,
   /// if the value is not empty.
-  Protein merge(Protein other, {required bool failOnConflict}) {
+  @override
+  Protein merge(BiologicalEntity other, {required bool failOnConflict}) {
+    if (other is! Protein) {
+      throw Exception("Can only merge two objects of type Protein!");
+    }
+
     if (id != other.id) {
       throw Exception("Merging proteins only allowed if they have the same ID!");
     }
@@ -110,5 +105,15 @@ class Protein {
       "speciesName": taxonomy.name ?? "",
       "familyName": taxonomy.family ?? "",
     }..addAll(attributes.toMap());
+  }
+
+  @override
+  CustomAttributes getCustomAttributes() {
+    return attributes;
+  }
+
+  @override
+  String getID() {
+    return id;
   }
 }

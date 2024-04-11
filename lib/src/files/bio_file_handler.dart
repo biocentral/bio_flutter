@@ -22,7 +22,7 @@ abstract class BioFileFormatStrategy<T> {
 
   Future<void> write(Map<String, T> values) async {
     String converted = await compute(convertToString, values);
-    if(kIsWeb) {
+    if (kIsWeb) {
       String fileName = "$T.${filePath.split(".").last}";
       await triggerFileDownload(utf8.encode(converted), fileName);
     } else {
@@ -42,10 +42,10 @@ class BioFileHandlerConfig {
 
   BioFileHandlerConfig(
       {required this.failOnConflict,
-        required this.checkFileConsistency,
-        required this.allowParallelExecution,
-        required this.parallelExecutionThreshold,
-        required this.numberThreads});
+      required this.checkFileConsistency,
+      required this.allowParallelExecution,
+      required this.parallelExecutionThreshold,
+      required this.numberThreads});
 
   BioFileHandlerConfig.serialDefaultConfig()
       : failOnConflict = false,
@@ -63,11 +63,11 @@ class BioFileHandlerConfig {
 
   BioFileHandlerConfig copyWith(
       {failOnConflict,
-        checkFileConsistency,
-        removeDuplicates,
-        allowParallelExecution,
-        parallelExecutionThreshold,
-        numberThreads}) {
+      checkFileConsistency,
+      removeDuplicates,
+      allowParallelExecution,
+      parallelExecutionThreshold,
+      numberThreads}) {
     return BioFileHandlerConfig(
         failOnConflict: failOnConflict ?? this.failOnConflict,
         checkFileConsistency: checkFileConsistency ?? this.checkFileConsistency,
@@ -118,13 +118,13 @@ class BioFileHandler<T> {
           switch (T) {
             case Protein:
               bioFileFormatStrategy =
-              ProteinFastaFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
-              as BioFileFormatStrategy<T>;
+                  ProteinFastaFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
+                      as BioFileFormatStrategy<T>;
               break;
             case ProteinProteinInteraction:
               bioFileFormatStrategy =
-              InteractionFastaFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
-              as BioFileFormatStrategy<T>;
+                  InteractionFastaFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
+                      as BioFileFormatStrategy<T>;
               break;
           }
         }
@@ -133,8 +133,8 @@ class BioFileHandler<T> {
           switch (T) {
             case Embedding:
               bioFileFormatStrategy =
-              EmbeddingJsonFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
-              as BioFileFormatStrategy<T>;
+                  EmbeddingJsonFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
+                      as BioFileFormatStrategy<T>;
               break;
           }
         }
@@ -143,13 +143,23 @@ class BioFileHandler<T> {
           switch (T) {
             case UMAPData:
               bioFileFormatStrategy =
-              UMAPCSVFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
-              as BioFileFormatStrategy<T>;
+                  UMAPCSVFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
+                      as BioFileFormatStrategy<T>;
               break;
             case CustomAttributes:
               bioFileFormatStrategy =
-              CustomAttributesCSVFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
-              as BioFileFormatStrategy<T>;
+                  CustomAttributesCSVFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
+                      as BioFileFormatStrategy<T>;
+              break;
+          }
+        }
+      case SupportedFormat.tsv:
+        {
+          switch (T) {
+            case CustomAttributes:
+              bioFileFormatStrategy =
+                  CustomAttributesTSVFileFormatHandler(filePath, config ?? BioFileHandlerConfig.serialDefaultConfig())
+                      as BioFileFormatStrategy<T>;
               break;
           }
         }
@@ -161,4 +171,4 @@ class BioFileHandler<T> {
   }
 }
 
-enum SupportedFormat { fasta, json, csv }
+enum SupportedFormat { fasta, json, csv, tsv }

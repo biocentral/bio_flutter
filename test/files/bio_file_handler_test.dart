@@ -48,7 +48,7 @@ void main() {
         expect(interaction.interactor2.sequence is AminoAcidSequence, equals(true));
         expect(interaction.interactor2.sequence.verify(), equals(true));
 
-        String interactionID = interaction.getInteractionID();
+        String interactionID = interaction.getID();
         (String, String) proteinIDs = ProteinProteinInteraction.getProteinIDsFromInteractionID(interactionID);
         expect(interaction.interactor1.id, equals(proteinIDs.$1));
         expect(interaction.interactor2.id, equals(proteinIDs.$2));

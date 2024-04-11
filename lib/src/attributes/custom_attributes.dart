@@ -74,8 +74,8 @@ class CustomAttributes extends Equatable {
     return _attributes[key];
   }
 
-  CustomAttributesExtractor<T>? extract<T>(T target) {
-    switch (T) {
+  CustomAttributesExtractor<BiologicalEntity>? extract(BiologicalEntity target) {
+    switch (target.runtimeType) {
       case Protein:
         return CustomAttributesExtractor.protein(this, target as Protein);
       case ProteinProteinInteraction:
@@ -100,7 +100,7 @@ class CustomAttributes extends Equatable {
   List<Object?> get props => [_attributes];
 }
 
-class CustomAttributesExtractor<T> {
+class CustomAttributesExtractor<T extends BiologicalEntity> {
   final CustomAttributes _customAttributes;
   final Protein? _protein;
   final ProteinProteinInteraction? _interaction;
@@ -125,22 +125,22 @@ class CustomAttributesExtractor<T> {
 
   CustomAttributesExtractor.interaction(this._customAttributes, this._interaction) : _protein = null;
 
-  T? collect() {
-    switch (T) {
+  B? collect<B>() {
+    switch (B) {
       case Protein:
-        return _protein!.copyWith(attributes: _customAttributes.addAll(_protein.attributes.toMap())) as T;
+        return _protein!.copyWith(attributes: _customAttributes.addAll(_protein.attributes.toMap())) as B;
       case ProteinProteinInteraction:
-        return _interaction!.copyWith(attributes: _customAttributes.addAll(_interaction.attributes.toMap())) as T;
+        return _interaction!.copyWith(attributes: _customAttributes.addAll(_interaction.attributes.toMap())) as B;
     }
     return null;
   }
 
   CustomAttributesExtractor? extractAll() {
-    switch (T) {
-      case Protein:
-        return this.extractProteinID().extractSequence().extractTaxonomyID().extractFamilyName();
-      case ProteinProteinInteraction:
-        return this.extractExperimentalConfidenceScore();
+    if(_protein != null) {
+      return this.extractProteinID().extractSequence().extractTaxonomyID().extractFamilyName();
+    }
+    if(_interaction != null) {
+      return this.extractExperimentalConfidenceScore();
     }
     return this;
   }

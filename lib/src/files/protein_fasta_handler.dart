@@ -58,7 +58,7 @@ class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
       if(sequence == null) {
         throw Exception("Could not read sequence for entry: $entry");
       }
-      Protein protein = Protein(id, sequence: sequence).updateFromMap(attributes);
+      Protein protein = Protein(id, sequence: sequence).updateFromMap<Protein>(attributes);
 
       proteins[id] = protein;
     }
