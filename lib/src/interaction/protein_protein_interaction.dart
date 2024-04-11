@@ -1,6 +1,6 @@
 import 'package:bio_flutter/bio_flutter.dart';
 
-class ProteinProteinInteraction {
+class ProteinProteinInteraction extends BiologicalEntity {
   static const String interactionIndicator = "&";
 
   final Protein interactor1;
@@ -23,12 +23,10 @@ class ProteinProteinInteraction {
 
   static ProteinProteinInteraction? fromMap(Map<String, String> map) {
     // Using ! is safe in this context because null is only returned if type is not found for Extractor
-    return CustomAttributes(map).extract(const ProteinProteinInteraction.empty())!.extractAll()!.collect();
-  }
-
-  ProteinProteinInteraction updateFromMap(Map<String, String> map) {
-    // Using ! is safe in this context because null is only returned if type is not found for Extractor
-    return CustomAttributes(map).extract(this)!.extractAll()!.collect();
+    return CustomAttributes(map)
+        .extract(const ProteinProteinInteraction.empty())!
+        .extractAll()!
+        .collect<ProteinProteinInteraction>();
   }
 
   ProteinProteinInteraction copyWith({interactor1, interactor2, interacting, experimentalConfidenceScore, attributes}) {
@@ -38,11 +36,14 @@ class ProteinProteinInteraction {
         attributes: attributes ?? this.attributes);
   }
 
-  ProteinProteinInteraction merge(ProteinProteinInteraction other, {required bool failOnConflict}) {
-    if (getInteractionID() != other.getInteractionID() &&
-        getInteractionID() != flipInteractionID(other.getInteractionID())) {
+  @override
+  ProteinProteinInteraction merge(BiologicalEntity other, {required bool failOnConflict}) {
+    if (other is! ProteinProteinInteraction) {
+      throw Exception("Can only merge two objects of type ProteinProteinInteraction!");
+    }
+    if (getID() != other.getID() && getID() != flipInteractionID(other.getID())) {
       throw Exception(
-          "Merging interactions failed because interaction IDs do not match (${getInteractionID()} != ${other.getInteractionID()})!");
+          "Merging interactions failed because interaction IDs do not match (${getID()} != ${other.getID()})!");
     }
     if (failOnConflict && interacting != other.interacting) {
       throw Exception(
@@ -65,7 +66,8 @@ class ProteinProteinInteraction {
         experimentalConfidenceScore: mergedConfidenceScore, attributes: mergedAttributes);
   }
 
-  String getInteractionID() {
+  @override
+  String getID() {
     return "${interactor1.id}$interactionIndicator${interactor2.id}";
   }
 
@@ -109,11 +111,10 @@ class ProteinProteinInteraction {
       other is ProteinProteinInteraction &&
           runtimeType == other.runtimeType &&
           interacting == other.interacting &&
-          (getInteractionID() == other.getInteractionID() ||
-              flipInteractionID(getInteractionID()) == flipInteractionID(other.getInteractionID()));
+          (getID() == other.getID() || flipInteractionID(getID()) == flipInteractionID(other.getID()));
 
   @override
-  int get hashCode => getInteractionID().hashCode;
+  int get hashCode => getID().hashCode;
 
   @override
   String toString() {
@@ -122,11 +123,16 @@ class ProteinProteinInteraction {
 
   Map<String, String> toMap() {
     return {
-      "id": getInteractionID(),
+      "id": getID(),
       "interactor1": interactor1.id,
       "interactor2": interactor2.id,
       "interacting": interacting.toString(),
       "experimentalConfidenceScore": experimentalConfidenceScore?.toString() ?? "",
     }..addAll(attributes.toMap());
+  }
+
+  @override
+  CustomAttributes getCustomAttributes() {
+    return attributes;
   }
 }

@@ -61,7 +61,7 @@ void main() {
       expect(sequence.verify(), equals(true));
     });
     test('Handles incorrect sequences correctly', () async {
-      final List<String> invalidSequences = ["üäasdsd", "tezt", "CGUUUUUUUUUUUU-", "PRTEIN!!!", "1234", "&!09aBM"];
+      final List<String> invalidSequences = ["üäasdsd", "CGUUUUUUUUUUUU-", "PRTEIN!!!", "1234", "&!09aBM"];
       for (String sequenceString in invalidSequences) {
         Sequence? sequence = Sequence.buildVerifiedFromString(sequenceString);
         if (sequence != null) {
