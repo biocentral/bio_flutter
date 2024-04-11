@@ -36,6 +36,15 @@ class Taxonomy extends Equatable {
     return Taxonomy(id: mergedID, name: mergedName, family: mergedFamily);
   }
 
+  static bool isValidSpeciesTaxon(String speciesName) {
+    // Trim leading and trailing spaces
+    String trimmedName = speciesName.trim();
+    List<String> parts = trimmedName.split(RegExp(r'\s+'));
+
+    // Check for exactly two parts for genus and species, and allow three for subspecies
+    return parts.length == 2 || parts.length == 3;
+  }
+
   static bool isValidFamilyTaxon(String familyName) {
     for (String suffix in validFamilySuffixes) {
       if (familyName.endsWith(suffix)) {

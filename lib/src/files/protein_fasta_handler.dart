@@ -3,9 +3,23 @@ import 'package:bio_flutter/bio_flutter.dart';
 class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
   ProteinFastaFileFormatHandler(super.filePath, super.config);
 
+  (List<String>, String) _extractAdheringText(String input, String startDelimiter, String endDelimiter) {
+    final String escapedStartDelimiter = RegExp.escape(startDelimiter);
+    final String escapedEndDelimiter = RegExp.escape(endDelimiter);
+
+    final RegExp regExp = RegExp('$escapedStartDelimiter(.*?)$escapedEndDelimiter');
+    return (
+      regExp
+          .allMatches(input)
+          .map((match) => match.group(0)?.replaceAll(startDelimiter, "").replaceAll(endDelimiter, "") ?? "")
+          .toList(),
+      input.replaceAll(regExp, "")
+    );
+  }
+
   @override
   Future<Map<String, Protein>> readFromString(String? content) async {
-    if(content == null) {
+    if (content == null) {
       return {};
     }
 
@@ -20,8 +34,24 @@ class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
       if (lines.length < 2) {
         throw Exception("Invalid fasta file: Too few lines for entry (missing values or sequence) for entry: $entry");
       }
+      Map<String, String> attributes = {};
       // Read header
       String header = lines.first;
+
+      // Extract adhering values
+      if (header.contains("[") && header.contains("]")) {
+        (List<String>, String) extractionResult = _extractAdheringText(header, "[", "]");
+        List<String> bracketValues = extractionResult.$1;
+        header = extractionResult.$2;
+        // Fasta Standard: [Homo sapiens] := organism name
+        if (bracketValues.length == 1) {
+          attributes["organism"] = bracketValues.first;
+        } else {
+          for (int i = 0; i < bracketValues.length; i++) {
+            attributes["unknown$i"] = bracketValues[i];
+          }
+        }
+      }
       List<String> values = header.split(" ");
 
       // Read id
@@ -36,7 +66,6 @@ class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
       }
 
       // Read custom attributes
-      Map<String, String> attributes = {};
       for (String attribute in values.skip(1)) {
         if (attribute == "") {
           continue;
@@ -55,7 +84,7 @@ class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
       String sequenceString =
           lines.sublist(1).where((line) => line != "" && line != "\n").map((line) => line.trim()).join("");
       Sequence? sequence = Sequence.buildVerifiedFromString(sequenceString);
-      if(sequence == null) {
+      if (sequence == null) {
         throw Exception("Could not read sequence for entry: $entry");
       }
       Protein protein = Protein(id, sequence: sequence).updateFromMap<Protein>(attributes);
