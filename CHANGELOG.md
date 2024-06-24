@@ -1,3 +1,10 @@
+## 0.0.5
+
+### Maintenance
+* Multiple lines for sequences in protein fasta files are now allowed and concatenated
+* File names are now automatically added to loaded entities (column name `ExtractedDataset`)
+* Updating dependencies
+
 ## 0.0.4
 
 ### Maintenance
