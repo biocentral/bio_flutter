@@ -213,7 +213,7 @@ class _UmapVisualizerState extends State<UmapVisualizer> {
                 return response == null || response.touchedSpot == null ? MouseCursor.defer : SystemMouseCursors.click;
               },
               touchTooltipData: ScatterTouchTooltipData(
-                tooltipBgColor: Colors.black,
+                getTooltipColor: (_) => Colors.black,
                 getTooltipItems: (ScatterSpot touchedBarSpot) {
                   int indexOfSpot = scatterSpots.indexOf(touchedBarSpot);
                   String tooltipText = getTooltipInformationFromSpotIndex(indexOfSpot);
