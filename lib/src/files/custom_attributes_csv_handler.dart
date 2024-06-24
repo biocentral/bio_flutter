@@ -7,7 +7,7 @@ class CustomAttributesSVFileFormatHandler extends BioFileFormatStrategy<CustomAt
   CustomAttributesSVFileFormatHandler(super.filePath, super.config);
 
   @override
-  Future<Map<String, CustomAttributes>> readFromString(String? content) async {
+  Future<Map<String, CustomAttributes>> readFromString(String? content, {String? fileName}) async {
     if(content == null) {
       return {};
     }

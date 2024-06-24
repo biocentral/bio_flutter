@@ -5,6 +5,8 @@ import 'package:bio_flutter/bio_flutter.dart';
 import 'package:universal_io/io.dart' show File;
 
 abstract class BioFileFormatStrategy<T> {
+  static const String datasetColumnName = "ExtractedDataset";
+
   final String filePath;
   final BioFileHandlerConfig config;
 
@@ -13,10 +15,10 @@ abstract class BioFileFormatStrategy<T> {
   Future<Map<String, T>> read() async {
     File file = File(filePath);
     final String content = await file.readAsString();
-    return readFromString(content);
+    return readFromString(content, fileName: _extractFileName());
   }
 
-  Future<Map<String, T>> readFromString(String? content);
+  Future<Map<String, T>> readFromString(String? content, {String? fileName});
 
   Future<String> convertToString(Map<String, T> values);
 
@@ -29,6 +31,10 @@ abstract class BioFileFormatStrategy<T> {
       final File outputFile = File(filePath);
       await outputFile.writeAsString(converted);
     }
+  }
+
+  String _extractFileName() {
+    return filePath.split("/").last.split(".").first;
   }
 }
 
@@ -86,8 +92,8 @@ class BioFileHandlerContext<T> {
     return _strategy.read();
   }
 
-  Future<Map<String, T>> readFromString(String? content) async {
-    return _strategy.readFromString(content);
+  Future<Map<String, T>> readFromString(String? content, {String? fileName}) async {
+    return _strategy.readFromString(content, fileName: fileName);
   }
 
   Future<String> convertToString(Map<String, T> values) async {
