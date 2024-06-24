@@ -19,7 +19,7 @@ class InteractionFastaFileFormatHandler extends BioFileFormatStrategy<ProteinPro
   /// >Q99IB8-PRO_0000045603 INTERACTOR=Q03001 TARGET=1 SET=train
   /// QES
   @override
-  Future<Map<String, ProteinProteinInteraction>> readFromString(String? content) async {
+  Future<Map<String, ProteinProteinInteraction>> readFromString(String? content, {String? fileName}) async {
     if(content == null) {
       return {};
     }

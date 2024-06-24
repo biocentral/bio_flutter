@@ -6,7 +6,7 @@ class EmbeddingJsonFileFormatHandler extends BioFileFormatStrategy<Embedding> {
   EmbeddingJsonFileFormatHandler(super.filePath, super.config);
 
   @override
-  Future<Map<String, Embedding>> readFromString(String? content) async {
+  Future<Map<String, Embedding>> readFromString(String? content, {String? fileName}) async {
     if(content == null) {
       return {};
     }

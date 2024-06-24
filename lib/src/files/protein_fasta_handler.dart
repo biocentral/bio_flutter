@@ -18,7 +18,7 @@ class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
   }
 
   @override
-  Future<Map<String, Protein>> readFromString(String? content) async {
+  Future<Map<String, Protein>> readFromString(String? content, {String? fileName}) async {
     if (content == null) {
       return {};
     }
@@ -87,6 +87,12 @@ class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
       if (sequence == null) {
         throw Exception("Could not read sequence for entry: $entry");
       }
+
+      // Add file name as dataset column
+      if(fileName != null && !attributes.containsKey(BioFileFormatStrategy.datasetColumnName)) {
+        attributes[BioFileFormatStrategy.datasetColumnName] = fileName;
+      }
+
       Protein protein = Protein(id, sequence: sequence).updateFromMap<Protein>(attributes);
 
       proteins[id] = protein;

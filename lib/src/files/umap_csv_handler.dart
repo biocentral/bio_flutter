@@ -15,7 +15,7 @@ class UMAPCSVFileFormatHandler extends BioFileFormatStrategy<UMAPData> {
   }
 
   @override
-  Future<Map<String, UMAPData>> readFromString(String? content) async {
+  Future<Map<String, UMAPData>> readFromString(String? content, {String? fileName}) async {
     if(content == null) {
       return {};
     }
