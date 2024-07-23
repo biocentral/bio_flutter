@@ -1,8 +1,18 @@
 ## 0.0.5
 
+### Features
+* Adding `EmbeddingsCombiner`
+Is able to combine two embeddings via a combining function, currently multiply elementwise and concatenation. 
+Enables `ProteinProteinInteraction` to provide the getEmbeddings interface.
+* Adding draft classes for `AminoAcid` and `Atom` to represent protein structure (work in progress)
+
 ### Maintenance
 * Multiple lines for sequences in protein fasta files are now allowed and concatenated
 * File names are now automatically added to loaded entities (column name `ExtractedDataset`)
+* Renaming `BiologicalEntity` to `BioEntity`
+* Making `nullableMerge` applicable for non-comparable types
+* Adding toMap() and getEmbeddings() to `BioEntity` interface
+* Introducing functional error handling via `fpdart`, will be more widely adapted in future releases
 * Updating dependencies
 
 ## 0.0.4
