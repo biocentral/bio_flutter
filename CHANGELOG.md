@@ -13,6 +13,7 @@ Enables `ProteinProteinInteraction` to provide the getEmbeddings interface.
 * Making `nullableMerge` applicable for non-comparable types
 * Adding toMap() and getEmbeddings() to `BioEntity` interface
 * Introducing functional error handling via `fpdart`, will be more widely adapted in future releases
+* Moving package to `biocentral` organization
 * Updating dependencies
 
 ## 0.0.4
