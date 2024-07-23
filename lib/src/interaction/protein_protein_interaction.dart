@@ -1,6 +1,6 @@
 import 'package:bio_flutter/bio_flutter.dart';
 
-class ProteinProteinInteraction extends BiologicalEntity {
+class ProteinProteinInteraction extends BioEntity {
   static const String interactionIndicator = "&";
 
   final Protein interactor1;
@@ -37,7 +37,7 @@ class ProteinProteinInteraction extends BiologicalEntity {
   }
 
   @override
-  ProteinProteinInteraction merge(BiologicalEntity other, {required bool failOnConflict}) {
+  ProteinProteinInteraction merge(BioEntity other, {required bool failOnConflict}) {
     if (other is! ProteinProteinInteraction) {
       throw Exception("Can only merge two objects of type ProteinProteinInteraction!");
     }

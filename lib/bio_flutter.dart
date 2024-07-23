@@ -13,7 +13,7 @@ export 'src/files/custom_attributes_csv_handler.dart';
 
 export 'src/interaction/protein_protein_interaction.dart';
 
-export 'src/interfaces/biological_entity.dart';
+export 'src/interfaces/bio_entity.dart';
 
 export 'src/protein/embedding.dart';
 export 'src/protein/protein.dart';
