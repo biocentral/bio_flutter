@@ -11,7 +11,7 @@ bool str2bool(String string) {
 /// If exactly one of [t1] and [t2] is null, returns the other value
 /// If [failOnConflict] is true and [t1] and [t2] are not equal, raises Exception with [exceptionMessage]
 /// Otherwise, the first value, i.e. [t1] is returned
-T? nullableMerge<T extends Comparable>(T? t1, T? t2, String exceptionMessage, bool failOnConflict) {
+T? nullableMerge<T>(T? t1, T? t2, String exceptionMessage, bool failOnConflict) {
   if(t1 == null && t2 == null) {
     return null;
   }
@@ -21,8 +21,14 @@ T? nullableMerge<T extends Comparable>(T? t1, T? t2, String exceptionMessage, bo
   if(t1 == null && t2 != null) {
     return t2;
   }
-  if(failOnConflict && t1!.compareTo(t2) != 0) {
-    throw Exception(exceptionMessage);
+  if(t1 is Comparable && t2 is Comparable) {
+    if (failOnConflict && t1.compareTo(t2) != 0) {
+      throw Exception(exceptionMessage);
+    }
+  } else {
+    if (failOnConflict && t1.toString().compareTo(t2.toString()) != 0) {
+      throw Exception(exceptionMessage);
+    }
   }
   return t1;
 }
