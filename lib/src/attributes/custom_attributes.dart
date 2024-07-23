@@ -74,7 +74,7 @@ class CustomAttributes extends Equatable {
     return _attributes[key];
   }
 
-  CustomAttributesExtractor<BiologicalEntity>? extract(BiologicalEntity target) {
+  CustomAttributesExtractor<BioEntity>? extract(BioEntity target) {
     switch (target.runtimeType) {
       case Protein:
         return CustomAttributesExtractor.protein(this, target as Protein);
@@ -100,7 +100,7 @@ class CustomAttributes extends Equatable {
   List<Object?> get props => [_attributes];
 }
 
-class CustomAttributesExtractor<T extends BiologicalEntity> {
+class CustomAttributesExtractor<T extends BioEntity> {
   final CustomAttributes _customAttributes;
   final Protein? _protein;
   final ProteinProteinInteraction? _interaction;

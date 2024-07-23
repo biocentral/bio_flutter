@@ -1,22 +1,22 @@
 import 'package:bio_flutter/bio_flutter.dart';
 
-abstract class BiologicalEntity {
+abstract class BioEntity {
 
-  const BiologicalEntity();
+  const BioEntity();
 
   String getID();
 
-  T updateFromMap<T extends BiologicalEntity>(Map<String, String> map) {
+  T updateFromMap<T extends BioEntity>(Map<String, String> map) {
     // Using ! is safe in this context because null is only returned if type is not found for Extractor
     return (CustomAttributes(map).extract(this)!.extractAll()!.collect<T>() ?? this) as T;
   }
 
-  T updateFromCustomAttributes<T extends BiologicalEntity>(CustomAttributes newAttributes) {
+  T updateFromCustomAttributes<T extends BioEntity>(CustomAttributes newAttributes) {
     // Using ! is safe in this context because null is only returned if type is not found for Extractor
     return (newAttributes.extract(this)!.extractAll()!.collect<T>() ?? this) as T;
   }
 
-  BiologicalEntity merge(BiologicalEntity other, {required bool failOnConflict});
+  BioEntity merge(BioEntity other, {required bool failOnConflict});
 
   CustomAttributes getCustomAttributes();
 

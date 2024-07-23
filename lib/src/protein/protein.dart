@@ -9,7 +9,7 @@ import 'package:bio_flutter/bio_flutter.dart';
 /// The [taxonomy] represents the most important information to classify the protein's species of origin.
 /// The [attributes] are other generic attributes that are not represented by the features above.
 @immutable
-class Protein extends BiologicalEntity {
+class Protein extends BioEntity {
   final String id;
   final Sequence sequence;
   final EmbeddingManager embeddings;
@@ -49,7 +49,7 @@ class Protein extends BiologicalEntity {
   /// If [failOnConflict] is false, the value of this protein will be preferred over the other,
   /// if the value is not empty.
   @override
-  Protein merge(BiologicalEntity other, {required bool failOnConflict}) {
+  Protein merge(BioEntity other, {required bool failOnConflict}) {
     if (other is! Protein) {
       throw Exception("Can only merge two objects of type Protein!");
     }
