@@ -97,6 +97,7 @@ class Protein extends BiologicalEntity {
     return ">$id${attributesBuffer.toString()}";
   }
 
+  @override
   Map<String, String> toMap() {
     return {
       "id": id,
@@ -115,5 +116,10 @@ class Protein extends BiologicalEntity {
   @override
   String getID() {
     return id;
+  }
+
+  @override
+  EmbeddingManager getEmbeddings() {
+    return embeddings;
   }
 }

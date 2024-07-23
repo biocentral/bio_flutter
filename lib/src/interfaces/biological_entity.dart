@@ -19,4 +19,8 @@ abstract class BiologicalEntity {
   BiologicalEntity merge(BiologicalEntity other, {required bool failOnConflict});
 
   CustomAttributes getCustomAttributes();
+
+  Map<String, String> toMap();
+
+  EmbeddingManager getEmbeddings();
 }

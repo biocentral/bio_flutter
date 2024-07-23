@@ -121,6 +121,7 @@ class ProteinProteinInteraction extends BiologicalEntity {
     return 'ProteinProteinInteraction{interactor1: $interactor1, interactor2: $interactor2, interacting: $interacting}';
   }
 
+  @override
   Map<String, String> toMap() {
     return {
       "id": getID(),
@@ -134,5 +135,10 @@ class ProteinProteinInteraction extends BiologicalEntity {
   @override
   CustomAttributes getCustomAttributes() {
     return attributes;
+  }
+
+  @override
+  EmbeddingManager getEmbeddings() {
+    return EmbeddingsCombiner.combineAll(interactor1.embeddings, interactor2.embeddings);
   }
 }
