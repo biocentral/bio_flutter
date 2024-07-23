@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:equatable/equatable.dart';
+import 'package:fpdart/fpdart.dart';
 
 enum EmbeddingType { perSequence, perResidue }
 
@@ -25,9 +26,7 @@ class EmbeddingManager {
 
   Embedding? getEmbedding(EmbeddingType embeddingType, {String? embedderName}) {
     if (embedderName == null || embedderName == "") {
-      return _embeddings.isEmpty
-          ? null
-          : _embeddings.entries.first.value[embeddingType];
+      return _embeddings.isEmpty ? null : _embeddings.entries.first.value[embeddingType];
     }
     return _embeddings[embedderName]?[embeddingType];
   }
@@ -38,7 +37,6 @@ class EmbeddingManager {
 
   PerSequenceEmbedding? perSequence({String? embedderName}) {
     return getEmbedding(EmbeddingType.perSequence, embedderName: embedderName) as PerSequenceEmbedding?;
-
   }
 
   Set<String> getEmbedderNames() {
@@ -101,6 +99,8 @@ abstract class Embedding extends Equatable {
 
   int getEmbeddingDimension();
 
+  PerSequenceEmbedding reduce();
+
   dynamic rawValues();
 }
 
@@ -118,6 +118,7 @@ class PerResidueEmbedding extends Embedding {
             List.generate(numberResidues, (index) => List.generate(embeddingDimension, (_) => Random().nextDouble())),
         super("RandomEmbeddings");
 
+  @override
   PerSequenceEmbedding reduce() {
     // Calculate mean
     List<double> summedEmbeddingValues = List.filled(getEmbeddingDimension(), 0.0);
@@ -204,4 +205,63 @@ class PerSequenceEmbedding extends Embedding {
 
   @override
   List<Object?> get props => [embedderName, _embedding];
+
+  @override
+  PerSequenceEmbedding reduce() {
+    return this;
+  }
+}
+
+class EmbeddingsCombiner {
+  static final List<Either<Exception, Embedding> Function(Embedding? embd1, Embedding? embd2)> _combiningFunctions = [
+    _multiply,
+    _concat
+  ];
+
+  static EmbeddingManager combineAll(EmbeddingManager em1, EmbeddingManager em2) {
+    EmbeddingManager result = const EmbeddingManager.empty();
+    Set<String> commonEmbedderNames = {...em1.getEmbedderNames(), ...em2.getEmbedderNames()};
+    for (String embedderName in commonEmbedderNames) {
+      Set<EmbeddingType> commonEmbeddingTypes = {
+        ...em1._embeddings[embedderName]?.keys ?? {},
+        ...em2._embeddings[embedderName]?.keys ?? {}
+      };
+      for (EmbeddingType embeddingType in commonEmbeddingTypes) {
+        Embedding? emb1 = em1._embeddings[embedderName]?[embeddingType];
+        Embedding? emb2 = em2._embeddings[embedderName]?[embeddingType];
+        for (final combinationFunction in _combiningFunctions) {
+          final combinationEither = combinationFunction(emb1, emb2);
+          combinationEither.match((l) => print(l), (r) => result = result.addEmbedding(embedding: r));
+        }
+      }
+    }
+    return result;
+  }
+
+  static Either<Exception, Embedding> _multiply(Embedding? embd1, Embedding? embd2) {
+    if (embd1 == null || embd2 == null) {
+      return left(Exception("Cannot combine embeddings because one of the embeddings is null!"));
+    }
+    PerSequenceEmbedding perSequence1 = embd1.reduce();
+    PerSequenceEmbedding perSequence2 = embd2.reduce();
+    if (perSequence1.getEmbeddingDimension() != perSequence2.getEmbeddingDimension()) {
+      return left(Exception("Dimensions of embeddings to multiply do not match!"));
+    }
+
+    return right(PerSequenceEmbedding(
+        List.generate(perSequence1.getEmbeddingDimension(),
+            (index) => perSequence1._embedding[index] * perSequence2._embedding[index]),
+        embedderName: "Multiply: ${embd1.embedderName}*${embd2.embedderName}"));
+  }
+
+  static Either<Exception, Embedding> _concat(Embedding? embd1, Embedding? embd2) {
+    if (embd1 == null || embd2 == null) {
+      return left(Exception("Cannot combine embeddings because one of the embeddings is null!"));
+    }
+    PerSequenceEmbedding perSequence1 = embd1.reduce();
+    PerSequenceEmbedding perSequence2 = embd2.reduce();
+
+    return right(PerSequenceEmbedding(List.from(perSequence1._embedding)..addAll(perSequence2._embedding),
+        embedderName: "Concat: ${embd1.embedderName}++${embd2.embedderName}"));
+  }
 }
