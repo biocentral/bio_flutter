@@ -1,3 +1,13 @@
+## 0.0.6
+
+### Features
+* Adding `Cell` and `CellMeasurements` data classes
+* Adding `CellFCSParser` stub
+
+### Maintenance
+* Changing bio_file_handler structure to be able to handle both string and binary file types (breaking changes for
+string converting and parsing)
+
 ## 0.0.5
 
 ### Features
