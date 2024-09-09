@@ -1,16 +1,16 @@
 name: bio_flutter
 description: "Cross-platform representation and visualization of biological data in flutter"
-version: 0.0.5
+version: 0.0.6
 homepage: https://github.com/biocentral/bio_flutter
 
 environment:
   sdk: '>=3.2.2 <4.0.0'
-  flutter: ">=1.17.0"
+  flutter: ">=3.22.0"
 
 dependencies:
   async: ^2.11.0
   equatable: ^2.0.5
-  fl_chart: ^0.68.0
+  fl_chart: ^0.69.0
   flutter:
     sdk: flutter
   fpdart: ^1.1.0
