@@ -1,13 +1,12 @@
 import 'dart:collection';
 
+import 'package:bio_flutter/src/files/bio_file_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:bio_flutter/bio_flutter.dart';
 
-class InteractionFastaFileFormatHandler extends BioFileFormatStrategy<ProteinProteinInteraction> {
-  InteractionFastaFileFormatHandler(super.filePath, super.config);
-
+class PpiFastaParser implements BioFileParserString<ProteinProteinInteraction> {
   /// Reads an interaction fasta file in standardized format
   ///
   /// Each interaction is contained twice (in each direction) to store the
@@ -19,22 +18,22 @@ class InteractionFastaFileFormatHandler extends BioFileFormatStrategy<ProteinPro
   /// >Q99IB8-PRO_0000045603 INTERACTOR=Q03001 TARGET=1 SET=train
   /// QES
   @override
-  Future<Map<String, ProteinProteinInteraction>> readFromString(String? content, {String? fileName}) async {
-    if(content == null) {
+  Future<Map<String, ProteinProteinInteraction>> readFromString(String? content, BioFileHandlerConfig config,
+      {String? fileName}) async {
+    if (content == null) {
       return {};
     }
 
     Stopwatch stopwatch = Stopwatch()..start();
 
-    final List<String> fastaLines =
-        content.split("\n").where((line) => line != "" && line != "\n").toList();
+    final List<String> fastaLines = content.split("\n").where((line) => line != "" && line != "\n").toList();
 
     if (!_verifyFastaLines(fastaLines)) {
       throw Exception("Could not verify fasta file!");
     }
 
     (Map<String, Protein>, Map<String, (bool, String?)>) rawValues =
-        await compute(_readRawValuesFromInteractionFasta, fastaLines);
+        await compute(_readRawValuesFromInteractionFasta, (fastaLines, config));
 
     Map<String, ProteinProteinInteraction> interactions = await compute(_postprocessInteractionLoading, rawValues);
 
@@ -45,11 +44,13 @@ class InteractionFastaFileFormatHandler extends BioFileFormatStrategy<ProteinPro
   }
 
   Future<(Map<String, Protein>, Map<String, (bool, String?)>)> _readRawValuesFromInteractionFasta(
-      List<String> fastaLines) async {
-    Map<String, Protein> proteins = {};
+  (List<String>, BioFileHandlerConfig) linesConfigTuple) async {
+    final List<String> fastaLines = linesConfigTuple.$1;
+    final BioFileHandlerConfig config = linesConfigTuple.$2;
 
+    final Map<String, Protein> proteins = {};
     // interactionID => interacting, set
-    Map<String, (bool, String?)> interactionMap = {};
+    final Map<String, (bool, String?)> interactionMap = {};
 
     for (int i = 0; i < fastaLines.length; i += 2) {
       String line = fastaLines[i];
@@ -202,5 +203,15 @@ class InteractionFastaFileFormatHandler extends BioFileFormatStrategy<ProteinPro
       }
     }
     return result.toString();
+  }
+
+  @override
+  BioFileFormat getFormat() {
+    return FastaFormat();
+  }
+
+  @override
+  Type getType() {
+    return ProteinProteinInteraction;
   }
 }

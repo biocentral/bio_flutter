@@ -17,7 +17,10 @@ void main() {
         BioFileHandlerContext<Protein>? handler = BioFileHandler<Protein>().create(sequencesFile.absolute.path);
         Map<String, Protein> proteins = await handler.read();
         expect(proteins.length, equals(4));
-        String fastaString = await handler.convertToString(proteins);
+        String? fastaString = await handler.convertToString(proteins);
+        if(fastaString == null) {
+          fail("Converted string is null!");
+        }
         expect(fastaString.contains(">"), equals(true));
       } catch (e) {
         fail("Error was thrown during handler creation! (Error: ${e.toString()})");
@@ -35,7 +38,10 @@ void main() {
         Protein p2 = proteins["YP_096167.1"]!;
         expect(p1.taxonomy.name, equals("Legionella pneumophila"));
         expect(p2.taxonomy.name, equals("Legionella pneumophila"));
-        String fastaString = await handler.convertToString(proteins);
+        String? fastaString = await handler.convertToString(proteins);
+        if(fastaString == null) {
+          fail("Converted string is null!");
+        }
         expect(fastaString.contains(">"), equals(true));
       } catch (e) {
         fail("Error was thrown during handler creation! (Error: ${e.toString()})");
@@ -53,7 +59,10 @@ void main() {
         BioFileHandlerContext<ProteinProteinInteraction>? handler =
             BioFileHandler<ProteinProteinInteraction>().create(temp.absolute.path);
         interactions = await handler.read();
-        String fastaString = await handler.convertToString(interactions);
+        String? fastaString = await handler.convertToString(interactions);
+        if(fastaString == null) {
+          fail("Converted string is null!");
+        }
         expect(fastaString.contains(">"), equals(true));
       } catch (e) {
         fail("Error was thrown during handler creation! (Error: ${e.toString()})");

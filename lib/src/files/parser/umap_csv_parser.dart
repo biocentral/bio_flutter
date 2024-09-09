@@ -1,8 +1,7 @@
 import 'package:bio_flutter/bio_flutter.dart';
+import 'package:bio_flutter/src/files/bio_file_format.dart';
 
-class UMAPCSVFileFormatHandler extends BioFileFormatStrategy<UMAPData> {
-  UMAPCSVFileFormatHandler(super.filePath, super.config);
-
+class UMAPCSVParser extends BioFileParserString<UMAPData> {
   static const List<String> _umapCSVHeader = ["umapID", "pointID", "x", "y"];
   static const _delimiter = ",";
 
@@ -15,7 +14,7 @@ class UMAPCSVFileFormatHandler extends BioFileFormatStrategy<UMAPData> {
   }
 
   @override
-  Future<Map<String, UMAPData>> readFromString(String? content, {String? fileName}) async {
+  Future<Map<String, UMAPData>> readFromString(String? content, BioFileHandlerConfig config, {String? fileName}) async {
     if(content == null) {
       return {};
     }
@@ -83,5 +82,15 @@ class UMAPCSVFileFormatHandler extends BioFileFormatStrategy<UMAPData> {
       }
     }
     return result.toString();
+  }
+
+  @override
+  BioFileFormat getFormat() {
+    return CSVFormat();
+  }
+
+  @override
+  Type getType() {
+    return UMAPData;
   }
 }

@@ -1,13 +1,13 @@
 import 'dart:convert';
 
 import 'package:bio_flutter/bio_flutter.dart';
+import 'package:bio_flutter/src/files/bio_file_format.dart';
 
-class EmbeddingJsonFileFormatHandler extends BioFileFormatStrategy<Embedding> {
-  EmbeddingJsonFileFormatHandler(super.filePath, super.config);
-
+class EmbeddingJsonParser implements BioFileParserString<Embedding> {
   @override
-  Future<Map<String, Embedding>> readFromString(String? content, {String? fileName}) async {
-    if(content == null) {
+  Future<Map<String, Embedding>> readFromString(String? content, BioFileHandlerConfig config,
+      {String? fileName}) async {
+    if (content == null) {
       return {};
     }
 
@@ -55,5 +55,15 @@ class EmbeddingJsonFileFormatHandler extends BioFileFormatStrategy<Embedding> {
       result[embedding.embedderName]![proteinIDToEmbedding.key] = embedding.rawValues();
     }
     return jsonEncode(result);
+  }
+
+  @override
+  BioFileFormat getFormat() {
+    return JSONFormat();
+  }
+
+  @override
+  Type getType() {
+    return Embedding;
   }
 }

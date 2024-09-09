@@ -1,14 +1,13 @@
 import 'package:bio_flutter/bio_flutter.dart';
-import 'package:flutter/material.dart';
+import 'package:bio_flutter/src/files/bio_file_format.dart';
 
-class CustomAttributesSVFileFormatHandler extends BioFileFormatStrategy<CustomAttributes> {
+abstract class CustomAttributesSVParser implements BioFileParserString<CustomAttributes> {
   final String delimiter = "";
 
-  CustomAttributesSVFileFormatHandler(super.filePath, super.config);
-
   @override
-  Future<Map<String, CustomAttributes>> readFromString(String? content, {String? fileName}) async {
-    if(content == null) {
+  Future<Map<String, CustomAttributes>> readFromString(String? content, BioFileHandlerConfig config,
+      {String? fileName}) async {
+    if (content == null) {
       return {};
     }
 
@@ -17,22 +16,22 @@ class CustomAttributesSVFileFormatHandler extends BioFileFormatStrategy<CustomAt
 
     List<String> headerAsList = lines.first.toLowerCase().split(delimiter);
     Set<String> headerAsSet = headerAsList.toSet();
-    if(headerAsList.length > headerAsSet.length) {
+    if (headerAsList.length > headerAsSet.length) {
       throw Exception("Header of csv file contains non-unique values!");
     }
 
-    if(!headerAsSet.contains("id")) {
+    if (!headerAsSet.contains("id")) {
       throw Exception("Expected 'id' in header to associate attributes with some entity!");
     }
 
-    for(String line in lines.sublist(1)) {
+    for (String line in lines.sublist(1)) {
       List<String> values = line.split(delimiter);
 
       int columnIndex = 0;
       String? entityID;
       Map<String, String> attributes = {};
-      for(String columnName in headerAsList) {
-        if(columnName == "id") {
+      for (String columnName in headerAsList) {
+        if (columnName == "id") {
           entityID = values[columnIndex];
         } else {
           attributes[columnName] = values[columnIndex];
@@ -40,7 +39,7 @@ class CustomAttributesSVFileFormatHandler extends BioFileFormatStrategy<CustomAt
         columnIndex++;
       }
 
-      if(entityID == null || entityID == "") {
+      if (entityID == null || entityID == "") {
         throw Exception("Could not find entity id for line: $line!");
       }
 
@@ -68,19 +67,25 @@ class CustomAttributesSVFileFormatHandler extends BioFileFormatStrategy<CustomAt
     }
     return result.toString();
   }
+
+  @override
+  BioFileFormat getFormat() {
+    return CSVFormat();
+  }
+
+  @override
+  Type getType() {
+    return CustomAttributes;
+  }
 }
 
-class CustomAttributesCSVFileFormatHandler extends CustomAttributesSVFileFormatHandler {
+class CustomAttributesCSVParser extends CustomAttributesSVParser {
   @override
   String get delimiter => ",";
-
-  CustomAttributesCSVFileFormatHandler(super.filePath, super.config);
 }
 
-class CustomAttributesTSVFileFormatHandler extends CustomAttributesSVFileFormatHandler {
+class CustomAttributesTSVParser extends CustomAttributesSVParser {
   // TODO TAB vs. SPACE
   @override
   String get delimiter => " ";
-
-  CustomAttributesTSVFileFormatHandler(super.filePath, super.config);
 }

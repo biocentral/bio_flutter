@@ -5,11 +5,6 @@ library bio_flutter;
 export 'src/attributes/custom_attributes.dart';
 
 export 'src/files/bio_file_handler.dart';
-export 'src/files/umap_csv_handler.dart';
-export 'src/files/embedding_json_handler.dart';
-export 'src/files/protein_fasta_handler.dart';
-export 'src/files/interaction_fasta_handler.dart';
-export 'src/files/custom_attributes_csv_handler.dart';
 
 export 'src/interaction/protein_protein_interaction.dart';
 

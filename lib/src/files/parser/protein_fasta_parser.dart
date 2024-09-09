@@ -1,8 +1,7 @@
 import 'package:bio_flutter/bio_flutter.dart';
+import 'package:bio_flutter/src/files/bio_file_format.dart';
 
-class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
-  ProteinFastaFileFormatHandler(super.filePath, super.config);
-
+class ProteinFastaParser extends BioFileParserString<Protein> {
   (List<String>, String) _extractAdheringText(String input, String startDelimiter, String endDelimiter) {
     final String escapedStartDelimiter = RegExp.escape(startDelimiter);
     final String escapedEndDelimiter = RegExp.escape(endDelimiter);
@@ -18,7 +17,7 @@ class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
   }
 
   @override
-  Future<Map<String, Protein>> readFromString(String? content, {String? fileName}) async {
+  Future<Map<String, Protein>> readFromString(String? content, BioFileHandlerConfig config, {String? fileName}) async {
     if (content == null) {
       return {};
     }
@@ -89,8 +88,8 @@ class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
       }
 
       // Add file name as dataset column
-      if(fileName != null && !attributes.containsKey(BioFileFormatStrategy.datasetColumnName)) {
-        attributes[BioFileFormatStrategy.datasetColumnName] = fileName;
+      if (fileName != null && !attributes.containsKey(BioFileParser.datasetColumnName)) {
+        attributes[BioFileParser.datasetColumnName] = fileName;
       }
 
       Protein protein = Protein(id, sequence: sequence).updateFromMap<Protein>(attributes);
@@ -108,5 +107,15 @@ class ProteinFastaFileFormatHandler extends BioFileFormatStrategy<Protein> {
       result.writeln(protein.sequence.seq);
     }
     return result.toString();
+  }
+
+  @override
+  BioFileFormat getFormat() {
+    return FastaFormat();
+  }
+
+  @override
+  Type getType() {
+    return Protein;
   }
 }
