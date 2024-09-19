@@ -1,6 +1,6 @@
 import 'package:bio_flutter/bio_flutter.dart';
 
-abstract class BioEntity {
+abstract class BioEntity with TypeNameMixin {
 
   const BioEntity();
 

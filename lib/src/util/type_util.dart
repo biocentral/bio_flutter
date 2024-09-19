@@ -32,3 +32,10 @@ T? nullableMerge<T>(T? t1, T? t2, String exceptionMessage, bool failOnConflict) 
   }
   return t1;
 }
+
+/// Mixin to get the type name, i.e. class name of this class
+///
+/// Necessary because flutter web optimizer changes type names
+mixin TypeNameMixin {
+  String get typeName;
+}

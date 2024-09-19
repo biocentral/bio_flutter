@@ -43,6 +43,9 @@ class Protein extends BioEntity {
         attributes: attributes ?? this.attributes);
   }
 
+  @override
+  String get typeName => "Protein";
+
   /// Merge the values and attributes of this protein with another protein
   ///
   /// Merging is only allowed if both proteins have the same [id].

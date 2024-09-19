@@ -37,6 +37,9 @@ class ProteinProteinInteraction extends BioEntity {
   }
 
   @override
+  String get typeName => "ProteinProteinInteraction";
+
+  @override
   ProteinProteinInteraction merge(BioEntity other, {required bool failOnConflict}) {
     if (other is! ProteinProteinInteraction) {
       throw Exception("Can only merge two objects of type ProteinProteinInteraction!");
@@ -141,4 +144,5 @@ class ProteinProteinInteraction extends BioEntity {
   EmbeddingManager getEmbeddings() {
     return EmbeddingsCombiner.combineAll(interactor1.embeddings, interactor2.embeddings);
   }
+
 }

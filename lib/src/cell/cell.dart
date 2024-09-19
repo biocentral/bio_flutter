@@ -20,6 +20,9 @@ class Cell extends BioEntity {
     this.attributes = const CustomAttributes.empty()
   });
 
+  @override
+  String get typeName => "Cell";
+
   double? getMeasurement(String parameter) => measurements.getMeasurement(parameter);
   bool hasMeasurement(String parameter) => measurements.hasMeasurement(parameter);
   List<String> get measurementParameters => measurements.parameters;
