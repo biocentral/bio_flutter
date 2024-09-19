@@ -1,3 +1,7 @@
+## 0.0.7
+* Adding `TypeNameMixin` for all biological entities to be able to display the class name at runtime, 
+even for optimized types in flutter web renderer
+
 ## 0.0.6
 
 ### Features
