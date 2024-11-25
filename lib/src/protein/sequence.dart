@@ -110,6 +110,11 @@ abstract class Sequence {
 
   @override
   int get hashCode => seq.hashCode;
+
+  @override
+  String toString() {
+    return seq;
+  }
 }
 
 class AminoAcidSequence extends Sequence {
