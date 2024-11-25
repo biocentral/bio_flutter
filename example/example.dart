@@ -49,7 +49,10 @@ class UMAPViewerPage extends StatelessWidget {
     return Center(
         child: UmapVisualizer(
       umapData: UMAPData.random(proteinExampleData.length),
-      pointData: proteinExampleData.map((protein) => protein.toMap()).toList(),
+      pointData: proteinExampleData
+          .map((protein) =>
+              Map.fromEntries(protein.toMap().entries.map((entry) => MapEntry(entry.key, entry.value.toString()))))
+          .toList(),
       pointIdentifierKey: "id",
     ));
   }

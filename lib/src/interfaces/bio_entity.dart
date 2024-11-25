@@ -20,7 +20,7 @@ abstract class BioEntity with TypeNameMixin {
 
   CustomAttributes getCustomAttributes();
 
-  Map<String, String> toMap();
+  Map<String, dynamic> toMap();
 
   EmbeddingManager getEmbeddings();
 }
