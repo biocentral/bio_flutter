@@ -1,3 +1,9 @@
+## 0.0.8
+* Adding testing strategy
+* Making toMap more generic for bio entities
+* Adding toString function for sequence
+* Adding preliminary OneHotEncodingEmbedder
+
 ## 0.0.7
 * Adding `TypeNameMixin` for all biological entities to be able to display the class name at runtime, 
 even for optimized types in flutter web renderer
