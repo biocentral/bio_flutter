@@ -101,13 +101,14 @@ class Protein extends BioEntity {
   }
 
   @override
-  Map<String, String> toMap() {
+  Map<String, dynamic> toMap() {
     return {
       "id": id,
-      "sequence": sequence.seq,
-      "taxonomyID": taxonomy.id.toString(),
+      "sequence": sequence,
+      "taxonomyID": taxonomy.id,
       "speciesName": taxonomy.name ?? "",
       "familyName": taxonomy.family ?? "",
+      "embeddings": embeddings,
     }..addAll(attributes.toMap());
   }
 

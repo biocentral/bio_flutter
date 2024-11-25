@@ -125,13 +125,13 @@ class ProteinProteinInteraction extends BioEntity {
   }
 
   @override
-  Map<String, String> toMap() {
+  Map<String, dynamic> toMap() {
     return {
       "id": getID(),
       "interactor1": interactor1.id,
       "interactor2": interactor2.id,
-      "interacting": interacting.toString(),
-      "experimentalConfidenceScore": experimentalConfidenceScore?.toString() ?? "",
+      "interacting": interacting,
+      "experimentalConfidenceScore": experimentalConfidenceScore ?? "",
     }..addAll(attributes.toMap());
   }
 
