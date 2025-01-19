@@ -1,3 +1,8 @@
+## 0.0.9
+* (BREAKING) Renaming "UMAP" to more general "Projection" term
+This includes the data class, the visualizer, file handling and test cases
+* Updating dependencies
+
 ## 0.0.8
 * Adding testing strategy
 * Making toMap more generic for bio entities
