@@ -1,6 +1,6 @@
 name: bio_flutter
 description: "Cross-platform representation and visualization of biological data in flutter"
-version: 0.0.8
+version: 0.0.9
 homepage: https://github.com/biocentral/bio_flutter
 
 environment:
