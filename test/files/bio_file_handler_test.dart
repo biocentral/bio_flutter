@@ -115,35 +115,35 @@ void main() {
     });
   });
   group('UMAPData-CSV', () {
-    String csvPathSingle = "test/test_files/umap_data_single.csv";
-    String csvPathMultiple = "test/test_files/umap_data_multiple.csv";
-    String csvPathMultipleWithPointIDs = "test/test_files/umap_data_multiple_with_point_ids.csv";
+    String csvPathSingle = "test/test_files/projection_data_single.csv";
+    String csvPathMultiple = "test/test_files/projection_data_multiple.csv";
+    String csvPathMultipleWithPointIDs = "test/test_files/projection_data_multiple_with_point_ids.csv";
     File tempSingle = File(csvPathSingle);
     File tempMultiple = File(csvPathMultiple);
     File tempMultipleWithPointIDs = File(csvPathMultipleWithPointIDs);
-    test('Read file with single umap data', () async {
+    test('Read file with single projection data', () async {
       try {
-        BioFileHandlerContext<UMAPData>? handler = BioFileHandler<UMAPData>().create(tempSingle.absolute.path);
-        Map<String, UMAPData> embeddings = await handler.read();
+        BioFileHandlerContext<ProjectionData>? handler = BioFileHandler<ProjectionData>().create(tempSingle.absolute.path);
+        Map<String, ProjectionData> embeddings = await handler.read();
         expect(embeddings.keys.length, equals(1));
       } catch (e) {
         fail("Error was thrown during handler creation! (Error: ${e.toString()})");
       }
     });
-    test('Read file with multiple umap data', () async {
+    test('Read file with multiple projection data', () async {
       try {
-        BioFileHandlerContext<UMAPData>? handler = BioFileHandler<UMAPData>().create(tempMultiple.absolute.path);
-        Map<String, UMAPData> embeddings = await handler.read();
+        BioFileHandlerContext<ProjectionData>? handler = BioFileHandler<ProjectionData>().create(tempMultiple.absolute.path);
+        Map<String, ProjectionData> embeddings = await handler.read();
         expect(embeddings.keys.length, equals(3));
       } catch (e) {
         fail("Error was thrown during handler creation! (Error: ${e.toString()})");
       }
     });
-    test('Read file with multiple umap data with point ids', () async {
+    test('Read file with multiple projection data with point ids', () async {
       try {
-        BioFileHandlerContext<UMAPData>? handler =
-            BioFileHandler<UMAPData>().create(tempMultipleWithPointIDs.absolute.path);
-        Map<String, UMAPData> embeddings = await handler.read();
+        BioFileHandlerContext<ProjectionData>? handler =
+            BioFileHandler<ProjectionData>().create(tempMultipleWithPointIDs.absolute.path);
+        Map<String, ProjectionData> embeddings = await handler.read();
         expect(embeddings.keys.length, equals(3));
         expect(embeddings.values.last.pointIDs!.length, equals(embeddings.values.last.coordinates.length));
       } catch (e) {

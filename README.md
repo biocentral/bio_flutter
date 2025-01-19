@@ -19,8 +19,8 @@ Cross-platform representation and visualization of biological data in flutter.
 
 * UMAP Visualizer:
 
-<img src="https://github.com/SebieF/bio_flutter/blob/v0.0.3/doc/umap_visualizer.gif?raw=true" 
-alt="An animated image of the UMAP Visualizer widget" height="398" width="816" title="UMAP Visualizer"/>
+<img src="https://github.com/SebieF/bio_flutter/blob/v0.0.9/doc/projection_visualizer.gif?raw=true" 
+alt="An animated image of the Projection Visualizer widget" height="398" width="816" title="Projection Visualizer"/>
 
 **Biological Data Classes**:
 
@@ -41,7 +41,7 @@ alt="An animated image of the UMAP Visualizer widget" height="398" width="816" t
 | Protein                   |   ✅   |  ❌  |  ❌   | 
 | ProteinProteinInteraction |   ✅   |  ❌  |  ❌   | 
 | Embedding                 |   ❌   |  ❌  |  ✅   | 
-| UMAPData                  |   ❌   |  ✅  |  ❌   | 
+| ProjectionData            |   ❌   |  ✅  |  ❌   | 
 | CustomAttributes          |   ❌   |  ✅  |  ❌   |
 
 ## Usage
@@ -86,11 +86,9 @@ Future<List<Protein>> addCustomAttributes(List<Protein> proteins, String pathToF
 **Create a UMAP Visualizer Widget with random coordinates**:
 
 ```dart
-import 'package:flutter_test/flutter_test.dart';
-
-Widget createUmapWidget(List<ProteinProteinInteraction> interactionData) {
-  return UmapVisualizer(
-      umapData: UMAPData.random(interactionData.length),
+Widget createProjectionWidget(List<ProteinProteinInteraction> interactionData) {
+  return ProjectionVisualizer(
+      projectionData: ProjectionData.random(interactionData.length),
       pointIdentifierKey: "id",
       pointData: interactionData.map((interaction) => interaction.toMap()).toList()); // Also works with protein data
 }

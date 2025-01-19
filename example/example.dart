@@ -47,8 +47,8 @@ class UMAPViewerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-        child: UmapVisualizer(
-      umapData: UMAPData.random(proteinExampleData.length),
+        child: ProjectionVisualizer2D(
+      projectionData: ProjectionData.random(proteinExampleData.length, 2),
       pointData: proteinExampleData
           .map((protein) =>
               Map.fromEntries(protein.toMap().entries.map((entry) => MapEntry(entry.key, entry.value.toString()))))

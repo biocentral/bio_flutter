@@ -10,14 +10,14 @@ import 'parser/custom_attributes_csv_parser.dart';
 import 'parser/embedding_json_parser.dart';
 import 'parser/interaction_fasta_parser.dart';
 import 'parser/protein_fasta_parser.dart';
-import 'parser/umap_csv_parser.dart';
+import 'parser/projection_csv_parser.dart';
 
 final class _BioFileParserFactory<T> {
   final Set<BioFileParser> _availableParsers = {
     ProteinFastaParser(),
     PpiFastaParser(),
     EmbeddingJsonParser(),
-    UMAPCSVParser(),
+    ProjectionCSVParser(),
     CellFCSParser(),
     CustomAttributesCSVParser(),
     CustomAttributesTSVParser(),

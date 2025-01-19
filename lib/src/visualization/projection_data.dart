@@ -1,25 +1,31 @@
 import 'dart:math';
 
-class UMAPData {
-  // Name of the UMAP Data to visualize
+extension XYZ on List<double> {
+  double get x => this[0];
+  double get y => this[1];
+  double get z => this[2];
+}
+
+class ProjectionData {
+  // Usually name of the projection method
   final String identifier;
 
   // [[x0, y0], [x1, y1] ..]
-  final List<(double, double)> coordinates;
+  final List<List<double>> coordinates;
 
   // Can be protein ids or interaction ids for example
   final List<String>? pointIDs;
 
-  UMAPData(this.identifier, this.pointIDs, this.coordinates) {
+  ProjectionData(this.identifier, this.pointIDs, this.coordinates) {
     if (pointIDs != null) {
       assert(pointIDs!.length == coordinates.length);
     }
   }
 
-  UMAPData.random(int numberPoints)
+  ProjectionData.random(int numberPoints, int dimensions)
       : identifier = "random",
         pointIDs = null,
-        coordinates = List.generate(numberPoints, (index) => (_randomCoordinate(), _randomCoordinate()));
+        coordinates = List.generate(numberPoints, (index) => List.generate(dimensions, (_) => _randomCoordinate()));
 
   /// Create a random coordinate value within range [-20, 20]
   static double _randomCoordinate() {
@@ -34,30 +40,38 @@ class UMAPData {
     if (index < 0 || coordinates.length < index) {
       return null;
     }
-    return coordinates[index].$1;
+    return coordinates[index].x;
   }
 
   double? y({required int index}) {
     if (index < 0 || coordinates.length < index) {
       return null;
     }
-    return coordinates[index].$2;
+    return coordinates[index].y;
   }
 
   double minX() {
-    return coordinates.map((e) => e.$1).reduce(min);
+    return coordinates.map((e) => e.x).reduce(min);
   }
 
   double minY() {
-    return coordinates.map((e) => e.$2).reduce(min);
+    return coordinates.map((e) => e.y).reduce(min);
+  }
+
+  double? minZ() {
+    return coordinates.map((e) => e.z).reduce(min);
   }
 
   double maxX() {
-    return coordinates.map((e) => e.$1).reduce(max);
+    return coordinates.map((e) => e.x).reduce(max);
   }
 
   double maxY() {
-    return coordinates.map((e) => e.$2).reduce(max);
+    return coordinates.map((e) => e.y).reduce(max);
+  }
+
+  double maxZ() {
+    return coordinates.map((e) => e.z).reduce(max);
   }
 
   /// Function to sort categories with low number of subcategories to the top of the category selection
@@ -65,8 +79,8 @@ class UMAPData {
   /// When looking at categories within UMAP plots, usually unique features to every point
   /// (such as usually the sequence for proteins) are not as interesting as commonly shared features (such as their
   /// species of origin). That is why this function sorts the common features to the top and returns the categories
-  /// as the [UMAPCategory] data class in a map with category names as keys.
-  static Map<String, UMAPCategory>? sortedUMAPCategoriesFromPointData(List<Map<String, String>>? pointData) {
+  /// as the [ProjectionCategory] data class in a map with category names as keys.
+  static Map<String, ProjectionCategory>? sortedUMAPCategoriesFromPointData(List<Map<String, String>>? pointData) {
     if (pointData == null || pointData.isEmpty) {
       return null;
     }
@@ -87,22 +101,22 @@ class UMAPData {
       }
     }
 
-    Set<UMAPCategory> umapCategories = Set.from(uniqueMap.entries
+    Set<ProjectionCategory> projectionCategories = Set.from(uniqueMap.entries
         .where((element) => element.value.isNotEmpty)
-        .map((entry) => UMAPCategory(name: entry.key, subCategoriesWithOccurrences: entry.value)));
+        .map((entry) => ProjectionCategory(name: entry.key, subCategoriesWithOccurrences: entry.value)));
 
     // Sort categories with a lot of values (non-unique categories) down in the list
-    List<UMAPCategory> umapCategoriesSorted = List<UMAPCategory>.from(umapCategories)
+    List<ProjectionCategory> projectionCategoriesSorted = List<ProjectionCategory>.from(projectionCategories)
       ..sort((category1, category2) =>
           category1.subCategoriesWithOccurrences.length.compareTo(category2.subCategoriesWithOccurrences.length));
 
-    return {for (var element in umapCategoriesSorted) element.name: element};
+    return {for (var element in projectionCategoriesSorted) element.name: element};
   }
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is UMAPData &&
+      other is ProjectionData &&
           runtimeType == other.runtimeType &&
           identifier == other.identifier &&
           coordinates == other.coordinates &&
@@ -112,16 +126,16 @@ class UMAPData {
   int get hashCode => identifier.hashCode ^ coordinates.length.hashCode;
 }
 
-class UMAPCategory {
+class ProjectionCategory {
   final String name;
   final Map<String, int> subCategoriesWithOccurrences;
 
-  UMAPCategory({required this.name, required this.subCategoriesWithOccurrences});
+  ProjectionCategory({required this.name, required this.subCategoriesWithOccurrences});
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is UMAPCategory &&
+      other is ProjectionCategory &&
           runtimeType == other.runtimeType &&
           name == other.name &&
           subCategoriesWithOccurrences == other.subCategoriesWithOccurrences;

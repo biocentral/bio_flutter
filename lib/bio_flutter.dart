@@ -16,8 +16,8 @@ export 'src/protein/sequence.dart';
 
 export 'src/taxonomy/taxonomy.dart';
 
-export 'src/visualization/umap.dart';
-export 'src/widgets/umap_visualizer.dart';
+export 'src/visualization/projection_data.dart';
+export 'src/widgets/projection_visualizer2D.dart';
 
 export 'src/util/type_util.dart';
 export 'src/util/web_util.dart';

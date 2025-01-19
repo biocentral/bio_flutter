@@ -1,24 +1,24 @@
+import 'package:bio_flutter/bio_flutter.dart';
+import 'package:bio_flutter/src/util/format_util.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import 'package:bio_flutter/bio_flutter.dart';
-import 'package:bio_flutter/src/util/format_util.dart';
-
 @immutable
-class UmapVisualizer extends StatefulWidget {
+class ProjectionVisualizer2D extends StatefulWidget {
   final double radius;
 
-  final UMAPData umapData;
+  final ProjectionData projectionData;
   final List<Map<String, String>>? pointData;
   final String? pointIdentifierKey;
 
-  const UmapVisualizer({super.key, required this.umapData, this.pointData, this.pointIdentifierKey, this.radius = 6.0});
+  const ProjectionVisualizer2D(
+      {super.key, required this.projectionData, this.pointData, this.pointIdentifierKey, this.radius = 6.0});
 
   @override
-  State<UmapVisualizer> createState() => _UmapVisualizerState();
+  State<ProjectionVisualizer2D> createState() => _ProjectionVisualizer2DState();
 }
 
-class _UmapVisualizerState extends State<UmapVisualizer> {
+class _ProjectionVisualizer2DState extends State<ProjectionVisualizer2D> {
   static const Color _defaultColor = Colors.blue;
   static const TextStyle _defaultTextStyle = TextStyle(fontSize: 10);
   static const int _maxCharsToDisplay = 20; // Tooltips, Categories
@@ -27,7 +27,7 @@ class _UmapVisualizerState extends State<UmapVisualizer> {
   late TextStyle _textStyle;
 
   // category -> (sub-category -> number of values in pointData for sub-category)
-  late Map<String, UMAPCategory>? _selectableUMAPCategories;
+  late Map<String, ProjectionCategory>? _selectableUMAPCategories;
 
   late Map<String, Color>? _subCategoryToColorMap;
   late Map<String, bool>? _visibleSubCategoriesMap;
@@ -38,7 +38,7 @@ class _UmapVisualizerState extends State<UmapVisualizer> {
   @override
   void initState() {
     super.initState();
-    _selectableUMAPCategories = UMAPData.sortedUMAPCategoriesFromPointData(widget.pointData);
+    _selectableUMAPCategories = ProjectionData.sortedUMAPCategoriesFromPointData(widget.pointData);
   }
 
   @override
@@ -57,11 +57,11 @@ class _UmapVisualizerState extends State<UmapVisualizer> {
       List<ScatterSpot> result = [];
 
       int index = 0;
-      for ((double, double) coordinate in widget.umapData.coordinates) {
+      for (final coordinate in widget.projectionData.coordinates) {
         String categoryValueOfProtein = widget.pointData![index][_selectedCategory]!;
         // Filter invisible categories
         if (_visibleSubCategoriesMap![categoryValueOfProtein] == true) {
-          result.add(ScatterSpot(coordinate.$1, coordinate.$2,
+          result.add(ScatterSpot(coordinate.x, coordinate.y,
               dotPainter: FlDotCirclePainter(
                   color: _subCategoryToColorMap![categoryValueOfProtein] ?? _defaultColor, radius: widget.radius)));
         }
@@ -71,8 +71,8 @@ class _UmapVisualizerState extends State<UmapVisualizer> {
     }
 
     final FlDotCirclePainter dotPainter = FlDotCirclePainter(color: _dotColor, radius: widget.radius);
-    return widget.umapData.coordinates
-        .map((coordinate) => ScatterSpot(coordinate.$1, coordinate.$2, dotPainter: dotPainter))
+    return widget.projectionData.coordinates
+        .map((coordinate) => ScatterSpot(coordinate.x, coordinate.y, dotPainter: dotPainter))
         .toList();
   }
 
@@ -159,7 +159,7 @@ class _UmapVisualizerState extends State<UmapVisualizer> {
         leadingIcon: const Icon(Icons.search),
         label: const Text("Select category.."),
         dropdownMenuEntries: _selectableUMAPCategories!.entries
-            .map((MapEntry<String, UMAPCategory> entry) => DropdownMenuEntry<String>(
+            .map((MapEntry<String, ProjectionCategory> entry) => DropdownMenuEntry<String>(
                 value: entry.key,
                 label: "${entry.value.name}: ${entry.value.subCategoriesWithOccurrences.length} subcategories"))
             .toList(),
@@ -173,10 +173,10 @@ class _UmapVisualizerState extends State<UmapVisualizer> {
   }
 
   Widget buildScatterChart() {
-    double minX = widget.umapData.minX();
-    double maxX = widget.umapData.maxX();
-    double minY = widget.umapData.minY();
-    double maxY = widget.umapData.maxY();
+    double minX = widget.projectionData.minX();
+    double maxX = widget.projectionData.maxX();
+    double minY = widget.projectionData.minY();
+    double maxY = widget.projectionData.maxY();
     double axisIntervalHorizontal = (maxX - minX);
     double axisIntervalVertical = (maxY - minY);
 
