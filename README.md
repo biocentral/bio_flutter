@@ -17,6 +17,15 @@ Cross-platform representation and visualization of biological data in flutter.
 
 **Widgets**:
 
+* Protein structure viewer: interactive cartoon rendering of amino acid chains
+  from mmCIF, with selection, residue color annotations, and camera controls.
+  See the [viewer guide](doc/protein_viewer/README.md) and
+  [platform setup](doc/protein_viewer/platforms.md).
+
+The structure viewer requires the Flutter revision pinned in `.fvmrc`
+(3.48.0-1.0.pre-204). This raises the SDK requirements for all consumers of
+`bio_flutter`. Native applications also need the runner settings documented above.
+
 * Projection Data Visualizer:
 
 <img src="https://github.com/SebieF/bio_flutter/blob/v0.0.9/doc/projection_visualizer.gif?raw=true" 
@@ -105,4 +114,4 @@ the codebase on GitHub!
 * Increase test coverage
 * Improve documentation
 * Support more file formats for all data types
-* Add 3D protein visualization
+* Extend 3D protein visualization
