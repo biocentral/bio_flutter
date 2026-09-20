@@ -1,0 +1,2 @@
+# Preserve fixture contents across platforms; existing parsers expect LF.
+test/test_files/** text eol=lf
