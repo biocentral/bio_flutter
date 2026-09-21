@@ -20,7 +20,8 @@ attachment is scoped to the widget lifetime.
 `ViewerScene` is an internal GPU boundary. Widget tests substitute a fake scene
 to verify input handling, controlled state, callbacks, replacement, disposal,
 and camera preservation. Geometry and parser tests exercise the real algorithms.
-Visual verification is platform-dependent; current results are tracked in [platform setup](platforms.md).
+Visual verification is platform-dependent; consumer configuration is documented
+in [platform setup](platforms.md).
 
 `SelectionState` snapshots controlled inputs and emits immutable proposals.
 The renderer has no authority to change application selection. Color precedence

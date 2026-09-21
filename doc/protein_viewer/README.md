@@ -4,7 +4,9 @@ A Flutter cartoon viewer for amino acid chains in mmCIF files. Embed it in an ap
 
 The viewer is exported by `package:bio_flutter/bio_flutter.dart` and by the focused
 `package:bio_flutter/protein_viewer.dart` entry point. Flutter requirements apply
-to the entire package, regardless of which entry point is imported.
+to the entire package, regardless of which entry point is imported. The example
+contains Dart sources and fixtures only; consuming applications provide their own
+platform runners.
 
 ## Quick start
 
@@ -116,7 +118,7 @@ Drag to rotate, scroll/pinch to zoom, and shift-drag or use two fingers to pan. 
   need additional validation; header assignments may be inaccurate.
 
 See [architecture](architecture.md) for implementation boundaries and
-[platform setup](platforms.md) for platform verification status.
+[platform setup](platforms.md) for consumer configuration.
 
 `Protein` and `AminoAcidSequence` remain sequence-oriented models. A parsed
 `MolecularStructure` holds resolved coordinates independently: one structure can
@@ -134,9 +136,10 @@ fvm install
 fvm flutter pub get
 cd example/protein_viewer
 fvm flutter pub get
-fvm flutter run -d linux
-# Or: fvm flutter run -d chrome
 ```
+
+The example intentionally omits generated platform runners. To run it, generate
+the desired runner locally and apply the settings in [platform setup](platforms.md).
 
 FVM reads the parent `.fvmrc` from the example directory. It pins Flutter revision `cf97bfbcb9f508a35cfdc451f4c2d19e30ad6b7c` (3.48.0-1.0.pre-204). Installing it can create a separate FVM cache entry even if `master` already points at that revision. Scene is pinned to 0.20.0.
 
@@ -148,5 +151,5 @@ fvm flutter analyze
 fvm flutter test
 ```
 
-Formatting follows BioFlutter's default Dart formatter settings. CI runs the
-tests and platform builds. Visual verification is performed manually.
+Formatting follows BioFlutter's default Dart formatter settings. CI runs analysis
+and tests on Linux, macOS, and Windows. Visual verification is performed manually.

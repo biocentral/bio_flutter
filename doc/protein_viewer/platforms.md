@@ -1,8 +1,8 @@
 # Platform setup
 
-The example includes configuration for Linux, macOS, Windows, and web. Native
-Flutter GPU configuration belongs to the consuming application's runner; a Dart
-package cannot change it automatically.
+The package does not include generated platform runners. Native Flutter GPU
+configuration belongs to the consuming application's runner and cannot be applied
+automatically by a Dart package.
 
 Use the revision in `.fvmrc` for reproducible development. The runner APIs below
 were checked against that SDK. The package's pre-release Flutter/Dart constraints
@@ -67,17 +67,9 @@ fvm flutter build web
 WebAssembly compilation was checked by Flutter's build dry run; browser runtime
 verification so far covers the default JavaScript build only.
 
-## Verification status
-
-| Platform | Build | Visual verification |
-| --- | --- | --- |
-| Linux | Release build passed | Confirmed by the project owner |
-| Chrome/web | Release build passed | Confirmed by the project owner |
-| macOS | Configuration added; native build pending | Pending |
-| Windows | Configuration added; native build pending | Pending |
-
-The CI workflow provides native build jobs on all three desktop operating
-systems. Adding those jobs does not imply they have already passed.
+The package test suite runs on Linux, macOS, and Windows. Application builds and
+visual verification belong to consuming projects because their runner settings
+are application-owned.
 
 Sources: [Scene 0.20 requirements](https://pub.dev/packages/flutter_scene/versions/0.20.0),
 [Flutter GPU](https://docs.flutter.dev/perf/impeller#flutter-gpu), and the

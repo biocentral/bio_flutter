@@ -24,7 +24,7 @@ Cross-platform representation and visualization of biological data in flutter.
 
 The structure viewer requires the Flutter revision pinned in `.fvmrc`
 (3.48.0-1.0.pre-204). This raises the SDK requirements for all consumers of
-`bio_flutter`. Native applications also need the runner settings documented above.
+`bio_flutter`. Native applications must configure their runner as documented above.
 
 * Projection Data Visualizer:
 
