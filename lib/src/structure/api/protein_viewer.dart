@@ -87,7 +87,7 @@ class _ProteinViewerState extends State<ProteinViewer> {
   final _selection = SelectionState();
   final _camera = OrbitCameraController(target: Vector3.zero());
   final Map<ResidueKey, ResidueHit> _residues = {};
-  ViewerSceneFactory? _factory; // testing
+  ViewerSceneFactory? _factory;
   ViewerScene? _scene;
   Object? _error;
   int _generation = 0;

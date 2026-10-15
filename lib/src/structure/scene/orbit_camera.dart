@@ -4,11 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart';
 
-// The constructor deliberately assigns public-named params to private
-// fields in its body rather than via `this._target` initializing formals:
-// an initializing formal's external argument name has to match the field
-// name exactly, which would force callers to write the private name
-// (`_target:`) — not usable outside this library.
+// Initializing formals would expose private names as parameter names.
 // ignore_for_file: prefer_initializing_formals
 
 /// An orbit camera with rotation, zoom, and camera-relative panning.
@@ -63,9 +59,7 @@ class OrbitCameraController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Re-centers the camera on a new [target]/[distance] — used when a new
-  /// structure is loaded, so the view frames it rather than wherever the
-  /// previous structure happened to leave the camera.
+  /// Looks at [target] from [distance], keeping the current angles.
   void focusOn({required Vector3 target, required double distance}) {
     _target = target;
     _distance = distance.clamp(_minDistance, _maxDistance);

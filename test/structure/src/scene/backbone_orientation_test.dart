@@ -45,7 +45,7 @@ void main() {
           2,
           c: Vector3(1, 0, 0),
           o: Vector3(1, -1, 0),
-        ), // -Y (opposite hemisphere -- real strand pleat)
+        ), // -Y (opposite hemisphere, as in a strand pleat)
       ];
       final vectors = backboneOrientationVectors(residues);
       // Corrected, not raw: consecutive vectors must end up on the same side.

@@ -86,6 +86,59 @@ void main() {
     });
   });
 
+  group('SecondaryStructureRange.covers with label numbering', () {
+    const range = SecondaryStructureRange(
+      chainId: 'A',
+      type: SecondaryStructureType.helix,
+      beginLabelSeqId: 73,
+      endLabelSeqId: 79,
+      begin: ResidueId(75, ''),
+      end: ResidueId(81, ''),
+    );
+
+    test('prefers label numbering when the residue has it', () {
+      // Author 74 is label 72 and author 80 is label 78 in this scenario.
+      expect(
+        range.covers('A', const ResidueId(74, ''), labelSeqId: 72),
+        isFalse,
+      );
+      expect(
+        range.covers('A', const ResidueId(80, ''), labelSeqId: 78),
+        isTrue,
+      );
+      expect(
+        range.covers('A', const ResidueId(73, ''), labelSeqId: 73),
+        isTrue,
+      );
+    });
+
+    test('falls back to author numbering when the residue has no label', () {
+      expect(range.covers('A', const ResidueId(75, '')), isTrue);
+      expect(range.covers('A', const ResidueId(74, '')), isFalse);
+    });
+
+    test('a label-only range does not cover a residue without a label', () {
+      const labelOnly = SecondaryStructureRange(
+        chainId: 'A',
+        type: SecondaryStructureType.helix,
+        beginLabelSeqId: 10,
+        endLabelSeqId: 20,
+      );
+      expect(labelOnly.covers('A', const ResidueId(15, '')), isFalse);
+      expect(
+        labelOnly.covers('A', const ResidueId(15, ''), labelSeqId: 15),
+        isTrue,
+      );
+    });
+
+    test('still requires the same chain', () {
+      expect(
+        range.covers('B', const ResidueId(75, ''), labelSeqId: 75),
+        isFalse,
+      );
+    });
+  });
+
   group('Residue', () {
     test('alphaCarbon finds the CA atom among several', () {
       final residue = Residue(
@@ -110,6 +163,7 @@ void main() {
     test('withSecondaryStructure returns a new instance, leaving atoms/name/id untouched', () {
       final original = Residue(
         id: const ResidueId(1, ''),
+        labelSeqId: 3,
         name: 'ALA',
         atoms: [_atom('CA')],
         secondaryStructure: SecondaryStructureType.loop,
@@ -121,6 +175,7 @@ void main() {
       expect(helical.secondaryStructure, SecondaryStructureType.helix);
       expect(helical.id, original.id);
       expect(helical.atoms, original.atoms);
+      expect(helical.labelSeqId, original.labelSeqId);
     });
   });
 

@@ -1,50 +1,56 @@
-/// A per-residue secondary-structure label. When it comes from real header
-/// annotation (`_struct_conf`/`_struct_sheet_range`), [helix] means
-/// whatever the depositor called a helix — alpha, 3₁₀, or pi alike. When it
-/// comes from the geometric fallback instead (`ss/p_sea.dart`, used when a
-/// file has no header annotation at all), [helix] means specifically
-/// *alpha* helix — the P-SEA algorithm's distance/angle thresholds are
-/// calibrated to alpha-helix geometry and will not detect a 3₁₀ or pi
-/// helix, even a real one (confirmed against PDB 2QLE, whose header-labeled
-/// 3₁₀ helices the geometric assignment correctly does not reproduce; see
-/// `test/src/ss/p_sea_test.dart`).
+/// A per-residue secondary-structure label.
+///
+/// From header annotation, [helix] covers any depositor helix type (alpha,
+/// 3₁₀, or pi). From the geometric fallback, it means alpha helix only.
 enum SecondaryStructureType { loop, helix, sheet }
 
-/// One `_struct_conf`/`_struct_sheet_range` range: `[begin, end]` of one
-/// chain's author-numbered residues, inclusive, boundaries expressed as
-/// full [ResidueId]s (sequence number *and* insertion code).
+/// One header secondary-structure range of one chain, inclusive.
 ///
-/// Using [ResidueId] rather than a bare integer range matters: a residue
-/// sharing a numeric `auth_seq_id` with a range boundary but a different
-/// insertion code (e.g. a range ending at `82` while the next residue is
-/// `82A`) must not be misclassified — see [covers].
+/// Boundaries may be in label numbering, author numbering, or both. Label
+/// numbering is preferred because author numbering can skip numbers and
+/// drift from it. Author boundaries include insertion codes, so `82A` lies
+/// after a range ending at `82`.
 class SecondaryStructureRange {
   const SecondaryStructureRange({
     required this.chainId,
-    required this.begin,
-    required this.end,
     required this.type,
+    this.beginLabelSeqId,
+    this.endLabelSeqId,
+    this.begin,
+    this.end,
   });
 
   /// `label_asym_id` of the chain this range belongs to.
   final String chainId;
-
-  final ResidueId begin;
-  final ResidueId end;
   final SecondaryStructureType type;
 
-  bool covers(String chainId, ResidueId id) =>
-      chainId == this.chainId &&
-      id.compareTo(begin) >= 0 &&
-      id.compareTo(end) <= 0;
+  /// Label-numbered boundaries; both or neither are set.
+  final int? beginLabelSeqId;
+  final int? endLabelSeqId;
+
+  /// Author-numbered boundaries; both or neither are set.
+  final ResidueId? begin;
+  final ResidueId? end;
+
+  /// Whether the residue identified by [id] and [labelSeqId] lies in range.
+  ///
+  /// Uses label numbering when both the range and the residue have it,
+  /// otherwise author numbering when the range has it.
+  bool covers(String chainId, ResidueId id, {int? labelSeqId}) {
+    if (chainId != this.chainId) return false;
+    final int? beginLabel = beginLabelSeqId;
+    final int? endLabel = endLabelSeqId;
+    if (labelSeqId != null && beginLabel != null && endLabel != null) {
+      return labelSeqId >= beginLabel && labelSeqId <= endLabel;
+    }
+    final ResidueId? beginAuth = begin;
+    final ResidueId? endAuth = end;
+    if (beginAuth == null || endAuth == null) return false;
+    return id.compareTo(beginAuth) >= 0 && id.compareTo(endAuth) <= 0;
+  }
 }
 
-/// A residue's identity within its chain: mmCIF's author-assigned
-/// `(auth_seq_id, insertion_code)` pair.
-///
-/// This lives here (rather than in `residue.dart`) because
-/// [SecondaryStructureRange] needs it and `residue.dart` needs it too —
-/// see `residue.dart` for its use as a residue's actual identity.
+/// A residue's author identity: `auth_seq_id` and insertion code.
 class ResidueId implements Comparable<ResidueId> {
   const ResidueId(this.authSeqId, this.insertionCode);
 

@@ -110,14 +110,9 @@ void main() {
     test(
       '2QLE strand: broad agreement with the real header-derived assignment',
       () {
-        // Sheet is the meaningful comparison on this particular fixture (see
-        // the helix test below for why helix isn't). P-SEA/DSSP agreement on
-        // strand is documented at ~78% generally; observed on this fixture:
-        // 317/456 = ~69.5%. The 0.6 bound below is deliberately looser than
-        // that observed figure (this is an independent port compared against
-        // header annotations, not DSSP itself) -- if this ever regresses,
-        // knowing the real number was ~69.5% tells you it's drift, not that
-        // the bound was always this tight.
+        // Sheet is the meaningful comparison here; see the helix test below.
+        // P-SEA/DSSP strand agreement is typically ~78%; observed here: 338/456
+        // (~74.1%). The 0.6 bound leaves room below that.
         final content = File('test/structure/fixtures/2QLE.cif')
             .readAsStringSync();
         final parsed = parseMmcifStructure(
@@ -152,19 +147,10 @@ void main() {
     );
 
     test('2QLE helix: near-zero agreement is expected, because these are 3-10 helices, not alpha', () {
-      // Confirmed directly against the file: every _struct_conf row here
-      // has pdbx_PDB_helix_class 5 ("right-handed 3-10 helix", the PDB's
-      // legacy HELIX-record vocabulary carried into mmCIF) and spans only
-      // 4-7 residues. P-SEA's thresholds (Cα distances, pseudo-angle,
-      // pseudo-dihedral) are calibrated to *alpha*-helix geometry — a 3-10
-      // helix's tighter ~3-residues-per-turn pitch doesn't fit them, and
-      // several of these segments are too short for the run-length->=5
-      // requirement to ever fire regardless of geometry. A real P-SEA (or
-      // DSSP) run would show the same gap; this is a documented limitation
-      // of the algorithm's scope, not a defect in this port. The ~94%
-      // helix agreement figure quoted elsewhere describes typical alpha
-      // helix-dominated structures, which 2QLE's header-labeled "helix"
-      // regions are not.
+      // 17 of the 21 helix rows are 3-10 helices (class 5), which P-SEA's
+      // alpha-calibrated thresholds do not detect, and all rows span only 4-7
+      // residues. The four alpha rows (author 82-87) are not detected either.
+      // Observed: 0/124.
       final content = File('test/structure/fixtures/2QLE.cif')
           .readAsStringSync();
       final parsed = parseMmcifStructure(content);
@@ -189,17 +175,14 @@ void main() {
       expect(
         agree,
         0,
-        reason: '2QLE has no alpha helices to agree on; a positive count here would be suspicious, not reassuring',
+        reason: 'P-SEA was observed to assign no helix in 2QLE; a change means the assignment itself changed',
       );
     });
 
     test('myoglobin (AlphaFold model, real DSSP-derived headers): high agreement on genuine alpha helices', () {
-      // Complements the 2QLE test above: myoglobin is the classic all-alpha
-      // globin fold (8 helices, A-H), and modern AlphaFold DB mmCIF files
-      // embed DSSP-computed _struct_conf (criteria: DSSP) -- so unlike
-      // 2QLE, this file's header-labeled "helix" residues genuinely are
-      // (mostly) HELX_RH_AL_P, i.e. alpha, which P-SEA is calibrated for.
-      // Observed: 104/116 = ~89.7%, close to the ~94% documented baseline.
+      // Myoglobin is all alpha, and AlphaFold DB files embed DSSP helices, which
+      // P-SEA is calibrated for. Observed: 104/116 (~89.7%), near the ~94%
+      // documented baseline.
       final content = File('test/structure/fixtures/AF-P02185-F1-myoglobin.cif')
           .readAsStringSync();
       final parsed = parseMmcifStructure(content);
@@ -233,12 +216,8 @@ void main() {
 
   group('assignGeometricSecondaryStructure: real fixture with headers stripped (fallback path)', () {
     test('myoglobin with no _struct_conf at all: parseMmcifStructure actually runs the fallback', () {
-      // AF-P02185-F1-myoglobin-no-ss.cif is a byte-for-byte copy of the
-      // real AlphaFold/DSSP fixture above with the _struct_conf and
-      // _struct_conf_type loop_ blocks deleted -- same real predicted-model
-      // geometry, simulating the header-less AlphaFold output this
-      // fallback exists for (current AlphaFold DB files happen to embed
-      // DSSP annotation; third-party/older exports commonly don't).
+      // The myoglobin fixture with its _struct_conf blocks removed, simulating
+      // header-less AlphaFold output.
       final content = File(
         'test/structure/fixtures/AF-P02185-F1-myoglobin-no-ss.cif',
       ).readAsStringSync();

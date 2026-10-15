@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:vector_math/vector_math.dart';
 
-/// The pseudo bond angle at [b], formed by points [a], [b], [c] — radians
-/// in `[0, pi]`.
+/// The pseudo bond angle at [b] formed by [a], [b], and [c], in radians in
+/// `[0, pi]`.
 double angleAt(Vector3 a, Vector3 b, Vector3 c) {
   final Vector3 ba = a - b;
   final Vector3 bc = c - b;

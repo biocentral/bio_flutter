@@ -26,17 +26,12 @@ Texture2D pencilGrainTexture() {
   final Texture2D? cached = _cached;
   if (cached != null) return cached;
 
-  final math.Random rng = math.Random(
-    1337,
-  ); // fixed seed: a stable look across runs, not a fresh grain every launch
+  final math.Random rng = math.Random(1337); // fixed seed for a stable look
   final Map<int, List<List<double>>> octaveGrids = {
     for (final freq in _octaveFrequencies) freq: _randomGrid(freq, rng),
   };
 
-  // Independent grids for the warp/fade/speckle layers -- deliberately not
-  // reused from `octaveGrids`, so none of these layers visibly lines up
-  // with the base grain or with each other (shared grids would correlate
-  // them, reintroducing a different kind of regularity).
+  // Separate grids keep the layers uncorrelated.
   const int warpFreq = 16;
   final List<List<double>> warpXGrid = _randomGrid(warpFreq, rng);
   final List<List<double>> warpYGrid = _randomGrid(warpFreq, rng);
@@ -130,10 +125,8 @@ Texture2D pencilGrainTexture() {
 List<List<double>> _randomGrid(int freq, math.Random rng) =>
     List.generate(freq, (_) => List.generate(freq, (_) => rng.nextDouble()));
 
-/// Bilinear lookup into [grid] (a [freq] x [freq] [_randomGrid]) at
-/// fractional grid coordinates ([gx], [gy]), wrapping at the grid's own
-/// edges — the wraparound (not a clamp) is what makes the *sampled* noise
-/// tile seamlessly once [gx]/[gy] complete a full cycle of the texture.
+/// Bilinear lookup into [grid] at fractional coordinates, wrapping so the
+/// result tiles.
 double _sampleGrid(List<List<double>> grid, int freq, double gx, double gy) {
   final int x0 = gx.floor() % freq;
   final int y0 = gy.floor() % freq;
@@ -162,16 +155,9 @@ double _tileableNoise(int x, int y, Map<int, List<List<double>>> grids) {
   return sum / totalAmplitude;
 }
 
-/// A thin bright ridge (`~1.0`) along evenly-spaced parallel lines running
-/// perpendicular to wavevector `(kx, ky)`, `~0.0` everywhere else, sampled
-/// at ([x], [y]) — pass warped (non-integer, noise-perturbed) coordinates,
-/// not raw pixel indices, to bend the lines off dead-straight (see
-/// [pencilGrainTexture]'s [_warpAmplitude] use). [kx]/[ky] are whole
-/// cycles across the texture, so the *un-warped* pattern this perturbs
-/// tiles exactly at the texture's edges regardless of [_grainSize].
-/// Raising the raised-cosine to a high power narrows the bright band from
-/// a smooth wave into a crisp stroke, closer to a single pencil line than
-/// a soft sinusoidal band.
+/// Thin pencil-like lines perpendicular to wavevector ([kx], [ky]) at
+/// ([x], [y]): near 1 on a line, near 0 elsewhere. Whole-cycle wavevectors
+/// keep the unwarped pattern tileable.
 double _hatchLine(double x, double y, int kx, int ky) {
   final double phase =
       2 * math.pi * (kx * x / _grainSize + ky * y / _grainSize);

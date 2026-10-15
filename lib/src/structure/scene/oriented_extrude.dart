@@ -327,16 +327,6 @@ class _MeshAccumulator {
   );
 }
 
-/// Returns a unit-circle profile for the extruder.
-List<Vector2> unitCircleProfile({int segments = 12}) {
-  final List<Vector2> profile = [];
-  for (int i = 0; i < segments; i++) {
-    final double theta = 2 * math.pi * i / segments;
-    profile.add(Vector2(math.cos(theta), math.sin(theta)));
-  }
-  return profile;
-}
-
 /// Returns matching round and rectangular profiles for blending.
 ///
 /// [segments] must be a multiple of eight. Rectangle corners are duplicated

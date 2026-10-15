@@ -23,8 +23,10 @@ Residue _residue(
   double x,
   SecondaryStructureType type, {
   bool withCa = true,
+  int? label,
 }) => Residue(
   id: ResidueId(seq, icode),
+  labelSeqId: label,
   name: 'ALA',
   atoms: withCa ? [_ca(x)] : const [],
   secondaryStructure: type,
@@ -92,9 +94,8 @@ void main() {
     });
 
     test('a genuine gap hiding underneath a run of CA-less residues is still detected', () {
-      // 1 has CA; 2 exists (has some other atom) but no CA, and then the
-      // file jumps straight to 40 with no entry in between -- a true gap
-      // that happens to fall inside the CA-less run.
+      // 2 has no CA, and the file then jumps to 40: a real gap inside the
+      // CA-less run.
       final residues = [
         _residue(1, '', 0.0, SecondaryStructureType.loop),
         _residue(2, '', 3.8, SecondaryStructureType.loop, withCa: false),
@@ -136,6 +137,49 @@ void main() {
         isChainContiguous(farChain, farResidues[0], farResidues[3]),
         isFalse,
       );
+    });
+  });
+
+  group('isChainContiguous with label numbering', () {
+    test('an author-numbering skip with consecutive labels is contiguous', () {
+      // 2QLE: PHE 64 -> CRO 66 (no CA atom) -> VAL 68 in author numbering,
+      // label 64 -> 65 -> 66. The real Cα-Cα distance is ~7.4 A.
+      final residues = [
+        _residue(64, '', 0.0, SecondaryStructureType.loop, label: 64),
+        _residue(
+          66,
+          '',
+          3.7,
+          SecondaryStructureType.loop,
+          withCa: false,
+          label: 65,
+        ),
+        _residue(68, '', 7.4, SecondaryStructureType.loop, label: 66),
+      ];
+      final chain = _chainOf(residues);
+      expect(isChainContiguous(chain, residues[0], residues[2]), isTrue);
+      expect(sequenceGapInfo(chain, residues[0].id, residues[2].id), (
+        false,
+        1,
+      ));
+    });
+
+    test('a label gap is a break even when author numbers are consecutive', () {
+      final residues = [
+        _residue(10, '', 0.0, SecondaryStructureType.loop, label: 10),
+        _residue(11, '', 3.8, SecondaryStructureType.loop, label: 14),
+      ];
+      final chain = _chainOf(residues);
+      expect(isChainContiguous(chain, residues[0], residues[1]), isFalse);
+    });
+
+    test('falls back to author numbering when a label is missing', () {
+      final residues = [
+        _residue(10, '', 0.0, SecondaryStructureType.loop, label: 10),
+        _residue(12, '', 3.8, SecondaryStructureType.loop),
+      ];
+      final chain = _chainOf(residues);
+      expect(isChainContiguous(chain, residues[0], residues[1]), isFalse);
     });
   });
 
@@ -253,7 +297,7 @@ void main() {
       final structure = _structureOf([
         _residue(1, '', 0.0, SecondaryStructureType.loop),
         _residue(2, '', 3.8, SecondaryStructureType.helix),
-        // Residues 3-9 missing entirely (unresolved loop) -- a real break.
+        // Residues 3-9 missing entirely (unresolved loop): a real break.
         _residue(10, '', 40.0, SecondaryStructureType.sheet),
       ]);
       final runs = buildContinuousRuns(structure);
@@ -289,10 +333,8 @@ void main() {
     test(
       'authChainId is resolved from the chain, distinct from the label chainId',
       () {
-        // A polymer chain and its associated hetero groups commonly share one
-        // auth_asym_id while having different label_asym_ids (see Chain's own
-        // doc comment) -- exercise that mismatch directly rather than a
-        // fixture where they happen to coincide.
+        // A polymer and its hetero groups can share auth_asym_id but not
+        // label_asym_id.
         final structure = MolecularStructure(
           chains: [
             Chain(

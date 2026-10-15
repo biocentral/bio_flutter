@@ -1,16 +1,10 @@
-import 'package:vector_math/vector_math.dart';
-
 import '../model/chain.dart';
 import '../model/molecular_structure.dart';
 import '../model/residue.dart';
 import '../model/secondary_structure.dart';
 
-/// Above this Cα–Cα distance (Å), two candidate neighbor residues are
-/// treated as not physically bonded — a genuine chain break (missing
-/// density) — even if their sequence numbers look adjacent. Comfortably
-/// above the ~3.8 Å typical spacing along a modeled backbone, to tolerate
-/// normal geometric variation, and comfortably below the distance a real
-/// gap produces in practice.
+/// Cα-Cα distance (Å) above which residues count as a chain break, even when
+/// their numbering is consecutive. Bonded neighbors are about 3.8 Å apart.
 const double maxBondedCaDistance = 5.0;
 
 /// A contiguous run of one chain's residues sharing the same
@@ -27,25 +21,13 @@ class BackboneSegment {
 
   /// Every residue here has a non-null [Residue.alphaCarbon].
   final List<Residue> residues;
-
-  List<Vector3> get alphaCarbonPositions => [
-    for (final r in residues) r.alphaCarbon!.position,
-  ];
 }
 
-/// Splits every chain's alpha-carbon trace into [BackboneSegment]s.
+/// Splits each chain's Cα trace into [BackboneSegment]s at
+/// secondary-structure changes and chain breaks.
 ///
-/// A segment ends, and a new one starts, whenever either the next kept
-/// residue's secondary-structure type differs, or [isChainContiguous]
-/// says the previous and next kept residues aren't bonded neighbors.
-///
-/// Residues without a resolved CA are dropped from the trace — but,
-/// critically, **not treated as a break by themselves**: such a residue
-/// still has other atoms in the file (that's how it has a chain entry at
-/// all — a residue entirely absent from the file never becomes a
-/// [Residue] to begin with), so skipping over it while building the trace
-/// must not be confused with a genuine gap. See [isChainContiguous] for
-/// how the distinction is made.
+/// Residues without Cα are left out of the trace but are not breaks by
+/// themselves; see [isChainContiguous].
 List<BackboneSegment> buildBackboneSegments(MolecularStructure structure) {
   final List<BackboneSegment> segments = [];
 
@@ -88,16 +70,8 @@ List<BackboneSegment> buildBackboneSegments(MolecularStructure structure) {
   return segments;
 }
 
-/// A maximal run of one chain's residues with **no chain break** — unlike
-/// [BackboneSegment], not split by secondary-structure type. This is the
-/// unit the cartoon renderer sweeps as a single connected mesh, so a
-/// helix-to-loop or loop-to-sheet transition never shows the seam a
-/// separately-capped mesh boundary would.
-///
-/// Built by grouping the [BackboneSegment]s already produced by
-/// [buildBackboneSegments] — not by walking chain residues a second time,
-/// which could drift out of agreement with that function's own
-/// break/no-break decisions.
+/// A maximal run of one chain's residues with no chain break, rendered as
+/// one mesh so secondary-structure transitions have no seams.
 class ContinuousRun {
   const ContinuousRun({
     required this.chainId,
@@ -105,18 +79,14 @@ class ContinuousRun {
     required this.segments,
   });
 
-  /// `label_asym_id` — the internal grouping key (see [Chain.id]).
+  /// `label_asym_id`, the grouping key (see [Chain.id]).
   final String chainId;
 
-  /// `auth_asym_id` (see [Chain.authChainId]) — resolved once here, at
-  /// [buildContinuousRuns] time, so picking/highlighting code (which keys
-  /// externally on auth chain ID, matching [ResidueId]'s own auth-space
-  /// `authSeqId`) never needs to re-look this up from a chain map alongside
-  /// a [ContinuousRun] it already has.
+  /// `auth_asym_id` (see [Chain.authChainId]): display metadata only.
+  /// Picking and highlighting key on [chainId], as `ResidueKey` does.
   final String authChainId;
 
-  /// In sequence order; consecutive segments here are guaranteed bonded
-  /// neighbors ([isChainContiguous]), so nothing here is a real break.
+  /// In sequence order; consecutive segments are bonded neighbors.
   final List<BackboneSegment> segments;
 
   List<Residue> get residues => [
@@ -124,10 +94,8 @@ class ContinuousRun {
   ];
 }
 
-/// Groups [buildBackboneSegments]' output into [ContinuousRun]s: still one
-/// [BackboneSegment] per secondary-structure run, but consecutive segments
-/// of a chain that are bonded neighbors (a plain secondary-structure
-/// change, not a real gap) are merged into the same run.
+/// Groups [buildBackboneSegments] output into [ContinuousRun]s, merging
+/// consecutive segments that are bonded neighbors.
 List<ContinuousRun> buildContinuousRuns(MolecularStructure structure) {
   final List<BackboneSegment> segments = buildBackboneSegments(structure);
   final Map<String, Chain> chainById = {
@@ -174,8 +142,9 @@ List<ContinuousRun> buildContinuousRuns(MolecularStructure structure) {
 
 /// Whether two Cα residues are bonded neighbors.
 ///
-/// Both sequence continuity and the distance threshold must pass. Missing-Cα
-/// residues increase the permitted distance for the bridged interval.
+/// Both sequence continuity (see [sequenceGapInfo]) and the distance
+/// threshold must pass. Missing-Cα residues increase the permitted distance
+/// for the bridged interval.
 bool isChainContiguous(Chain chain, Residue previous, Residue next) {
   final (bool hasGap, int skippedCaLessResidues) = sequenceGapInfo(
     chain,
@@ -192,7 +161,12 @@ bool isChainContiguous(Chain chain, Residue previous, Residue next) {
   return distance <= allowedDistance;
 }
 
-/// Returns sequence continuity and the number of intervening residues without Cα.
+/// Returns whether there is a sequence gap from [from] to [to], and how many
+/// residues without Cα lie between them.
+///
+/// Uses `label_seq_id` when both neighbors have it, because author numbering
+/// can skip numbers without a break; otherwise author numbering. A step of
+/// zero (insertion code) or one is continuous.
 (bool hasGap, int skippedCount) sequenceGapInfo(
   Chain chain,
   ResidueId from,
@@ -206,8 +180,13 @@ bool isChainContiguous(Chain chain, Residue previous, Residue next) {
     return (false, 0);
   }
   for (int i = fromIndex + 1; i <= toIndex; i++) {
-    final int diff =
-        chain.residues[i].id.authSeqId - chain.residues[i - 1].id.authSeqId;
+    final Residue previous = chain.residues[i - 1];
+    final Residue next = chain.residues[i];
+    final int? previousLabel = previous.labelSeqId;
+    final int? nextLabel = next.labelSeqId;
+    final int diff = previousLabel != null && nextLabel != null
+        ? nextLabel - previousLabel
+        : next.id.authSeqId - previous.id.authSeqId;
     if (diff != 0 && diff != 1) return (true, 0);
   }
   return (false, toIndex - fromIndex - 1);

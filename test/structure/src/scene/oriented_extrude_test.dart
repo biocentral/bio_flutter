@@ -4,12 +4,8 @@ import 'package:bio_flutter/src/structure/scene/oriented_extrude.dart';
 import 'package:bio_flutter/src/structure/scene/ribbon_profile.dart';
 import 'package:vector_math/vector_math.dart';
 
-/// A straight, evenly-spaced synthetic backbone -- real Cα spacing (~3.8
-/// Å), a constant perpendicular direction vector (non-degenerate, so
-/// `computeOrientedFrames` doesn't need to fall back to an arbitrary
-/// axis). Good enough for exercising `buildOrientedExtrudeArrays`'
-/// bookkeeping (vertex/residue attribution), which doesn't depend on the
-/// path's actual shape.
+/// A straight synthetic backbone with 3.8 Å spacing and a constant direction
+/// vector. Shape does not matter for vertex bookkeeping.
 ({List<Vector3> positions, List<Vector3> directions}) _straightBackbone(
   int residueCount,
 ) => (
@@ -18,20 +14,6 @@ import 'package:vector_math/vector_math.dart';
 );
 
 void main() {
-  group('unitCircleProfile', () {
-    test('every point lies on the unit circle', () {
-      final profile = unitCircleProfile(segments: 12);
-      expect(profile, hasLength(12));
-      for (final p in profile) {
-        expect(p.length, closeTo(1.0, 1e-6));
-      }
-    });
-
-    test('respects a custom segment count', () {
-      expect(unitCircleProfile(segments: 6), hasLength(6));
-    });
-  });
-
   group('ribbonUnitProfiles', () {
     test('rejects a segment count that is not a multiple of 8', () {
       expect(() => ribbonUnitProfiles(segments: 12), throwsArgumentError);
@@ -79,8 +61,7 @@ void main() {
   });
 
   group('buildOrientedExtrudeArrays residueForVertex', () {
-    // Constant, always-round, non-degenerate profile -- these tests are
-    // about vertex→residue bookkeeping, not shape/size.
+    // Constant round profile: these tests cover vertex-to-residue bookkeeping.
     const ProfileSize size = (
       halfThickness: 0.2,
       halfWidth: 0.2,
@@ -88,13 +69,8 @@ void main() {
     );
     final profiles = ribbonUnitProfiles(segments: 16);
 
-    // One *distinct* color per residue -- `colorAt` and `residueIndexAt`
-    // are built from the same `colorAtParameter`/`residueIndexAtParameter`
-    // rounding, matching how `cartoon_builder.dart` actually wires them, so
-    // "vertex v's baked color equals baseColors[residueForVertex[v]]" is a
-    // real invariant to check, not just "every vertex got tagged with
-    // *some* number" (which `_MeshAccumulator.addVertex` guarantees by
-    // construction and can't fail).
+    // One distinct color per residue, so baked colors can be checked against
+    // residueForVertex.
     final baseColors = [
       for (int i = 0; i < 5; i++) Vector4(i.toDouble(), 0, 0, 1),
     ];
@@ -205,10 +181,7 @@ void main() {
     );
 
     test('the invariant holds through a skipped cap too (near-zero size at one end, an arrow-tip shape)', () {
-      // Mirrors a beta-strand arrow tip: the end station has ~zero size, so
-      // `buildOrientedExtrudeArrays` skips emitting a cap there -- must not
-      // desync `residueForVertex` (or the colors it should agree with) from
-      // the vertex count it's still building up to that point.
+      // Zero size at the end, like an arrow tip, so no end cap is emitted.
       final backbone = _straightBackbone(3);
       final colors = baseColors.sublist(0, 3);
       final arrays = buildOrientedExtrudeArrays(

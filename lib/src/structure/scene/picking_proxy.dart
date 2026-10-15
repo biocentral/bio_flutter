@@ -79,14 +79,8 @@ List<Vector3> buildPickingProxyVertices(ContinuousRun run) {
 
   final List<Vector3> directions = backboneOrientationVectors(run.residues);
   final CatmullRomPath path = CatmullRomPath(points);
-  // One frame per *residue*, not one per mesh station — the render mesh's
-  // 8x/16x-per-residue sweep resolution buys smoothness picking doesn't
-  // need. `computeOrientedFrames` distributes stations evenly by arc
-  // length, which only approximately (not exactly) lands each frame at
-  // its same-index residue's true position, since real inter-residue
-  // spacing isn't perfectly uniform — an approximation the render mesh
-  // already relies on at every other station count, and one a
-  // residue-sized hit box comfortably absorbs.
+  // One frame per residue. Arc-length spacing only approximately places
+  // frames at residues, which residue-sized boxes absorb.
   final List<OrientedFrame> frames = computeOrientedFrames(
     positionPath: path,
     residueDirectionVectors: directions,

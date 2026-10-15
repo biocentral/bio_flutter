@@ -3,28 +3,9 @@ import 'dart:ui' show Color;
 
 import 'package:vector_math/vector_math.dart';
 
-import '../model/residue_key.dart';
-
 /// Converts a Flutter color to normalized RGBA components.
 Vector4 colorToVector4(Color color) =>
     Vector4(color.r, color.g, color.b, color.a);
-
-/// Resolves hover, selection, annotation, and base colors in that order.
-Vector4 resolveResidueColor({
-  required ResidueKey key,
-  required Vector4 baseColor,
-  required ResidueKey? hoveredResidue,
-  required ResidueKey? selectedResidue,
-  required Map<ResidueKey, Color> highlightSet,
-  required Color hoverColor,
-  required Color selectedColor,
-}) {
-  if (key == hoveredResidue) return colorToVector4(hoverColor);
-  if (key == selectedResidue) return colorToVector4(selectedColor);
-  final Color? setColor = highlightSet[key];
-  if (setColor != null) return colorToVector4(setColor);
-  return baseColor;
-}
 
 /// Expands residue colors into the mesh's vertex-color buffer.
 Float32List scatterResidueColors(

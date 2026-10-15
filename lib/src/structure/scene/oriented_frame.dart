@@ -18,22 +18,16 @@ class OrientedFrame {
   /// Unit length, along the path.
   final Vector3 tangent;
 
-  /// Unit length, perpendicular to [tangent]. This is the cross-section's
-  /// "pointy"/wide direction — the axis a flattened ellipse or arrowhead's
-  /// width runs along.
+  /// Unit length, perpendicular to [tangent]: the cross-section's wide
+  /// direction.
   final Vector3 wideAxis;
 
   /// Unit length, perpendicular to both [tangent] and [wideAxis]. The
   /// cross-section's thin direction.
   final Vector3 thinAxis;
 
-  /// `positionPath`'s own natural parameter (`0..1`, evenly spaced per
-  /// control point — i.e. the fractional residue index) at this station.
-  /// Exposed so callers doing a *per-residue* lookup at this station (a
-  /// ribbon profile size, a secondary-structure color) use the same
-  /// residue-index-fraction meaning `ScenePath` itself uses, not the
-  /// stations' own even-arc-length spacing, which is a different quantity
-  /// whenever residues aren't perfectly evenly spaced along the path.
+  /// The path's natural parameter at this station, 0..1 and uniform per
+  /// control point. Per-residue lookups use this rather than arc length.
   final double naturalParameter;
 }
 
@@ -81,17 +75,10 @@ List<OrientedFrame> computeOrientedFrames({
 
     Vector3 wideAxis;
     if (previousWideAxis == null) {
-      // First station: no prior axis to blend with or carry forward, so
-      // this one has to be chosen from the raw signal alone (or, failing
-      // that, arbitrarily) — everything from here on stays continuous
-      // relative to it.
       wideAxis = projectedLength > 1e-9
           ? (projected / projectedLength)
           : _arbitraryPerpendicular(tangent);
     } else {
-      // The previous axis, carried forward and re-orthogonalized against
-      // *this* station's tangent — the fallback for zero confidence, and
-      // one input to the blend otherwise.
       final Vector3 carriedRaw =
           previousWideAxis - tangent * previousWideAxis.dot(tangent);
       final Vector3 carried = carriedRaw.length2 > 1e-12

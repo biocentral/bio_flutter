@@ -52,18 +52,12 @@ final SecondaryStructureColorScheme defaultColorScheme = (
   loop: Vector4(0.80, 0.80, 0.80, 1.0),
 );
 
-/// Returns the color for [type], using [defaultColorScheme] when omitted.
-Vector4 colorFor(
-  SecondaryStructureType type, {
-  SecondaryStructureColorScheme? scheme,
-}) {
-  final SecondaryStructureColorScheme resolved = scheme ?? defaultColorScheme;
-  return switch (type) {
-    SecondaryStructureType.helix => resolved.helix,
-    SecondaryStructureType.sheet => resolved.sheet,
-    SecondaryStructureType.loop => resolved.loop,
-  };
-}
+/// Returns the default color for [type].
+Vector4 colorFor(SecondaryStructureType type) => switch (type) {
+  SecondaryStructureType.helix => defaultColorScheme.helix,
+  SecondaryStructureType.sheet => defaultColorScheme.sheet,
+  SecondaryStructureType.loop => defaultColorScheme.loop,
+};
 
 ProfileSize _normalSizeFor(SecondaryStructureType type) => switch (type) {
   SecondaryStructureType.helix => _helixSize,
@@ -99,15 +93,9 @@ List<ProfileSizeSample> ribbonProfileSizes(ContinuousRun run) {
 
     if (segment.type == SecondaryStructureType.sheet && segLen >= 1) {
       final bool hasNext = segIndex < run.segments.length - 1;
-      // The tip's *size* converges to whatever follows (or to a true zero
-      // point at a run's actual terminus) exactly as before, but its
-      // `rectFactor` deliberately stays at the sheet's own (1.0) rather
-      // than following the next segment's — otherwise the round/rect shape
-      // morph would land across the arrowhead taper itself, softening
-      // exactly the corner the rectangular profile exists to sharpen. The
-      // shape morph instead happens over the following segment's own
-      // residues, right after the tip, where the cross-section is already
-      // small and round-vs-square is barely distinguishable.
+      // The tip shrinks to the next segment's size, or to a point at the run's
+      // end, but keeps the sheet's rectangular shape so arrowhead corners stay
+      // sharp.
       final ProfileSize nextNormal = hasNext
           ? _normalSizeFor(run.segments[segIndex + 1].type)
           : normal;
@@ -134,14 +122,8 @@ List<ProfileSizeSample> ribbonProfileSizes(ContinuousRun run) {
     index += segLen;
   }
 
-  // `ScenePath.parameterAtDistance` (and so `OrientedFrame.naturalParameter`,
-  // what callers actually query these samples with) is normalized to 0..1
-  // across the *whole* path, not 0..(totalResidues - 1) — one residue-index
-  // step is worth 1 / (totalResidues - 1) of that range. Every `t` stored
-  // here has to be in that same normalized space, or a query never reaches
-  // past the first residue or two before hitting the `t >= samples.last.t`
-  // clamp in `profileSizeAtParameter`, and the whole rest of the ribbon
-  // reads as one frozen (tubular) cross-section.
+  // Sample t is normalized to the whole path, matching
+  // OrientedFrame.naturalParameter.
   final double residueSpan = totalResidues > 1
       ? (totalResidues - 1).toDouble()
       : 1.0;
@@ -149,11 +131,7 @@ List<ProfileSizeSample> ribbonProfileSizes(ContinuousRun run) {
 
   final List<ProfileSizeSample> samples = [];
   for (int i = 0; i < totalResidues; i++) {
-    // A shoulder residue's own base value is already the flared width;
-    // the sample just before it (still at the previous, normal width)
-    // pins the ramp-in to a short stretch instead of the whole prior
-    // residue. Skipped when there's no room for it (the shoulder is the
-    // run's very first residue) — nothing precedes it to ramp from.
+    // A sample just before each shoulder keeps the flare short.
     if (shoulderIndices.contains(i) && i > 0) {
       samples.add((
         t: normalize(i - _arrowShoulderRampFraction),
@@ -166,13 +144,13 @@ List<ProfileSizeSample> ribbonProfileSizes(ContinuousRun run) {
   return samples;
 }
 
-/// Returns one RGBA color per residue in [run].
-List<Vector4> ribbonColors(
-  ContinuousRun run, {
-  SecondaryStructureColorScheme? scheme,
-}) => [
+/// Returns one default RGBA color per residue in [run].
+///
+/// These colors are baked into the initial mesh; the viewer replaces them
+/// with `CartoonStyle` colors before the first frame.
+List<Vector4> ribbonColors(ContinuousRun run) => [
   for (final segment in run.segments)
-    for (final _ in segment.residues) colorFor(segment.type, scheme: scheme),
+    for (final _ in segment.residues) colorFor(segment.type),
 ];
 
 /// Interpolates profile samples at normalized path parameter [t].
@@ -182,8 +160,7 @@ ProfileSize profileSizeAtParameter(List<ProfileSizeSample> samples, double t) {
   if (t <= samples.first.t) return samples.first.size;
   if (t >= samples.last.t) return samples.last.size;
 
-  // Binary search for the first sample whose t exceeds the query -- samples
-  // are constructed in ascending t order, so this is always valid.
+  // Samples are in ascending t order.
   int lo = 0;
   int hi = n - 1;
   while (lo < hi - 1) {

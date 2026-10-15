@@ -3,9 +3,7 @@ import 'package:vector_math/vector_math.dart';
 import '../model/atom.dart';
 import '../model/residue.dart';
 
-/// The peptide carbonyl oxygen's atom name — including the terminal
-/// carboxylate variants a chain's C-terminal residue may use instead of
-/// plain `O`.
+/// Carbonyl oxygen names, including C-terminal carboxylate variants.
 const List<String> _oxygenAtomNames = [
   'O',
   'OXT',
@@ -23,20 +21,14 @@ const List<String> _oxygenAtomNames = [
 List<Vector3> backboneOrientationVectors(List<Residue> residues) {
   final List<Vector3?> raw = [for (final r in residues) _rawDirection(r)];
 
-  // Backfill any leading residues missing C/O from the first residue that
-  // does have both.
   final int firstKnown = raw.indexWhere((v) => v != null);
   if (firstKnown == -1) {
-    // No residue in this run has both atoms -- there is no biological
-    // signal to orient by. An arbitrary-but-fixed vector still gives a
-    // consistent (if not meaningful) twist, which is better than
-    // crashing or defaulting to per-station randomness.
+    // No residue has both atoms: a fixed vector still gives a consistent twist.
     return [for (final _ in residues) Vector3(0, 1, 0)];
   }
   for (int i = 0; i < firstKnown; i++) {
     raw[i] = raw[firstKnown];
   }
-  // Forward-fill everything else.
   for (int i = 1; i < raw.length; i++) {
     raw[i] ??= raw[i - 1];
   }

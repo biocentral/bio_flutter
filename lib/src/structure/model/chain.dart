@@ -13,10 +13,7 @@ class Chain {
   /// `label_asym_id`: the grouping/identity key.
   final String id;
 
-  /// `auth_asym_id`: for display only. May be shared with a *different*
-  /// chain's [id] (a polymer and its associated hetero groups commonly
-  /// share one `auth_asym_id`), which is exactly why [id] and not this is
-  /// used for grouping.
+  /// `auth_asym_id`, for display only. Several chains may share it.
   final String authChainId;
 
   final List<Residue> residues;

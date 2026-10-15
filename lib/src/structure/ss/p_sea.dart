@@ -38,8 +38,9 @@ bool _inRange(double? value, (double, double) range) =>
 
 /// Assigns a secondary-structure type to every residue in [structure].
 ///
-/// Chains are processed independently and windows never cross numbering gaps.
-/// Contact checks use Cα atoms from all chains. Residues without Cα remain loops.
+/// Chains are processed independently and windows never cross sequence gaps
+/// or residues without Cα, which remain loops. Contact checks use Cα atoms
+/// from all chains.
 List<Chain> assignGeometricSecondaryStructure(MolecularStructure structure) {
   final List<Vector3> allResolvedCaPositions = [
     for (final atom in structure.atoms)
@@ -73,17 +74,18 @@ List<Residue> _assignForChain(
     ];
   }
 
-  // Null slots prevent geometric windows from crossing a numbering gap.
+  // Null slots keep geometric windows from crossing a sequence gap or a
+  // residue without Cα; the windows assume consecutive Cα positions.
   final List<Vector3?> pos = [];
   final List<int> sourceIndex = [];
   for (int i = 0; i < withCa.length; i++) {
     if (i > 0) {
-      final (bool hasGap, _) = sequenceGapInfo(
+      final (bool hasGap, int skippedCaLess) = sequenceGapInfo(
         chain,
         withCa[i - 1].id,
         withCa[i].id,
       );
-      if (hasGap) {
+      if (hasGap || skippedCaLess > 0) {
         pos.add(null);
         sourceIndex.add(-1);
       }
@@ -165,9 +167,6 @@ List<Residue> _assignForChain(
     relaxedStrand,
   );
 
-  // Map computed type back onto each CA-bearing residue's identity, then
-  // apply to every residue in the chain (CA-less residues simply never
-  // appear in this map and default to loop).
   final Map<ResidueId, SecondaryStructureType> typeByResidueId = {};
   for (int i = 0; i < length; i++) {
     final int source = sourceIndex[i];
