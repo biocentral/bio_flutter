@@ -1,9 +1,7 @@
-/// The kind of a raw [CifToken] produced by the character-level scanner.
+/// The lexical kind of a [CifToken].
 ///
-/// Kind is what lets the assembler (see `cif_document.dart`) tell a *tag*
-/// from a *value* correctly: an unquoted word starting with `_` is only
-/// ever a candidate tag; the same text arriving as a quoted or text-field
-/// value is always data, never structure, no matter what it looks like.
+/// Only unquoted words can be tags or keywords; quoted and text-field values
+/// are always data.
 enum CifTokenKind {
   /// An unquoted, whitespace-delimited word. May be a tag (starts with
   /// `_`), the `loop_`/`data_...` keywords (case-insensitive), a null
@@ -28,9 +26,7 @@ class CifToken {
   final CifTokenKind kind;
   final String text;
 
-  /// True for `?`/`.` only when they arrived unquoted — these are the CIF
-  /// null markers. A quoted `'.'` or `'?'` is a literal one-character
-  /// string, not null.
+  /// Whether this is a CIF null marker: an unquoted `?` or `.`.
   bool get isNullMarker =>
       kind == CifTokenKind.word && (text == '?' || text == '.');
 

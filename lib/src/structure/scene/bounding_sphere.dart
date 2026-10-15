@@ -10,10 +10,7 @@ class BoundingSphere {
   final Vector3 center;
   final double radius;
 
-  /// Used only when a structure has no atoms to compute a real bounding
-  /// sphere from (a valid, non-error state — see [MolecularStructure]),
-  /// or when every atom coincides at one point (an actual radius of zero
-  /// would otherwise leave the camera zoomed to nothing).
+  /// Radius used when there are no atoms or all atoms coincide.
   static const double fallbackRadius = 50.0;
 
   factory BoundingSphere.of(MolecularStructure structure) {

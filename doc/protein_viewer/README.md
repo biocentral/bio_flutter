@@ -73,9 +73,9 @@ Highlights do not change selection. Colors resolve in this order: hover, selecti
 final key = ResidueKey(chain.id, residue.id);
 ```
 
-`chain.id` is mmCIF `label_asym_id`, the unique chain instance identifier. `chain.authChainId` is the author-facing display name and may be shared by chains. `residue.id` contains `auth_seq_id` and the insertion code. Keys are scoped to one structure. The callback's `ResidueHit` contains the key, chain, and residue.
+`chain.id` is mmCIF `label_asym_id`, the unique chain instance identifier. `chain.authChainId` is the author-facing display name and may be shared by chains. `residue.id` contains `auth_seq_id` and the insertion code. `residue.labelSeqId` is mmCIF `label_seq_id`, the residue's 1-based position in the entity sequence, or null when the file omits it. Keys are scoped to one structure. The callback's `ResidueHit` contains the key, chain, and residue.
 
-Map sequence positions to parsed residues explicitly: missing coordinates, insertion codes, and author numbering mean a sequence index is not a residue ID. Unknown keys are ignored by the viewer. Residues without a drawable Cα backbone segment remain available in the model but cannot be picked in the cartoon.
+Map sequence positions to parsed residues explicitly: missing coordinates, insertion codes, and author numbering mean a sequence index is not a residue ID. When your sequence is the entity sequence, `labelSeqId` provides that mapping. Unknown keys are ignored by the viewer. Residues without a drawable Cα backbone segment remain available in the model but cannot be picked in the cartoon.
 
 ## Camera and styling
 
@@ -109,13 +109,14 @@ Drag to rotate, scroll/pinch to zoom, and shift-drag or use two fingers to pan. 
 - One mmCIF entry at a time, including multiple amino acid chains.
 - Cartoon rendering only. No legacy `.pdb` input, ligands, waters, or nucleic acids.
 - First data block and first encountered coordinate model; alternate atoms are resolved by occupancy, with file order breaking ties.
-- Header secondary structure is used when usable ranges exist; otherwise a Cα-based P-SEA fallback is used. This fallback identifies alpha helices and does not reproduce every depositor annotation. It is based on Labesse et al.'s original method: [Labesse et al. (1997), *Bioinformatics* 13(3), 291–295](https://doi.org/10.1093/bioinformatics/13.3.291).
+- Header secondary structure is used where its ranges cover a chain; chains without any covered residue use a Cα-based P-SEA fallback, with a diagnostic when header ranges were present. This fallback identifies alpha helices and does not reproduce every depositor annotation. It is based on Labesse et al.'s original method: [Labesse et al. (1997), *Bioinformatics* 13(3), 291–295](https://doi.org/10.1093/bioinformatics/13.3.291).
 - Models snapshot their input lists and coordinates. `Atom.position` returns a copy in ångströms.
 - Parsing uses a worker isolate on native platforms. Web parsing and mesh construction execute on the UI thread; large structures can cause pauses.
 - Picking uses approximate per-residue boxes. It is not atom-level hit testing.
-- Secondary-structure header ranges currently prefer label sequence numbers,
-  while residue identities use author numbering. Entries where these differ
-  need additional validation; header assignments may be inaccurate.
+- Header secondary-structure ranges and chain continuity are matched by
+  `label_seq_id`, which stays consecutive where author numbering skips (for
+  example at a fused chromophore). Files without label numbering fall back to
+  author numbering.
 
 See [architecture](architecture.md) for implementation boundaries and
 [platform setup](platforms.md) for consumer configuration.
@@ -124,7 +125,8 @@ See [architecture](architecture.md) for implementation boundaries and
 `MolecularStructure` holds resolved coordinates independently: one structure can
 contain multiple chains and omit sequence positions. Applications should keep an
 explicit mapping from their sequence positions to `ResidueKey` values; author
-numbering and insertion codes are not sequence indexes. The viewer does not
+numbering and insertion codes are not sequence indexes, while `labelSeqId` is
+the position in the entity sequence. The viewer does not
 silently merge coordinate data into an existing `Protein`.
 
 ## Example and development

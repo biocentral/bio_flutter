@@ -5,12 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bio_flutter/src/structure/scene/oriented_frame.dart';
 import 'package:vector_math/vector_math.dart';
 
-/// Builds a synthetic idealized helix: CA positions on a cylinder, and a
-/// per-residue C->O direction tilted [tiltDegrees] off the helix axis,
-/// rotating around the axis at the same per-residue twist as the backbone
-/// itself -- this is the realistic (and, per real alpha-helix geometry,
-/// the common) near-axis-parallel case that stresses the degenerate-frame
-/// guard in `computeOrientedFrames`.
+/// An idealized helix whose C->O vectors tilt [tiltDegrees] off the axis:
+/// the near-axial case that stresses the degenerate-frame guard.
 ({List<Vector3> positions, List<Vector3> directions}) _syntheticHelix({
   required int residueCount,
   double radius = 2.3,
@@ -63,14 +59,7 @@ void main() {
         expect(frames[i].wideAxis.dot(frames[i].tangent).abs(), lessThan(1e-6));
       }
 
-      // wideAxis should actually respond to the input, not freeze at
-      // whatever the first station happened to pick: over the whole
-      // ~5.3-turn helix it should have moved noticeably, even though (per
-      // the vector algebra of this particular pitch/tilt combination,
-      // verified separately) the tangent-orthogonalized residual here is
-      // dominated by the non-rotating axial component rather than the
-      // rotating radial one, so it need not track the raw per-residue
-      // twist angle directly.
+      // wideAxis must change over the helix rather than freeze at its first value.
       expect(frames.first.wideAxis.dot(frames.last.wideAxis), lessThan(0.999));
     });
 
@@ -98,12 +87,8 @@ void main() {
     );
 
     test('a tilt that repeatedly crosses the old hard degenerate cutoff produces no sudden reversal', () {
-      // Alternates each residue between a strongly degenerate (near-axial)
-      // tilt and a clean one -- exactly the shape of input that made a
-      // hard threshold switch "snap" between carried-forward and raw
-      // signal. The confidence-weighted blend should never let
-      // consecutive stations' wideAxis dot product go low, let alone
-      // negative (a reversal), anywhere in the sweep.
+      // Alternating near-axial and clean tilts must not reverse wideAxis between
+      // stations.
       const int residueCount = 24;
       const double twist = 100.0 * math.pi / 180.0;
       final List<Vector3> positions = [];
@@ -141,9 +126,8 @@ void main() {
     test(
       'each strand\'s wideAxis aligns with the strand-to-strand direction',
       () {
-        // Two straight strands 4.5 A apart along Y, running along X.
-        // Each residue's C->O direction points roughly toward the other
-        // strand -- the real consequence of forming an interstrand H-bond.
+        // Two straight strands 4.5 Å apart along Y, running along X, with C->O
+        // vectors pointing toward the other strand as in interstrand H-bonds.
         const int residueCount = 10;
         final List<Vector3> strandA = [
           for (int i = 0; i < residueCount; i++) Vector3(i * 3.4, 0, 0),
@@ -172,9 +156,7 @@ void main() {
         );
 
         for (final frame in [...framesA, ...framesB]) {
-          // wideAxis's *axis* (undirected) should be close to the Y axis --
-          // i.e. close to parallel to the strand-to-strand direction --
-          // regardless of which of the two signed directions it landed on.
+          // wideAxis is close to the Y axis, in either direction.
           expect(frame.wideAxis.dot(Vector3(0, 1, 0)).abs(), greaterThan(0.85));
         }
       },

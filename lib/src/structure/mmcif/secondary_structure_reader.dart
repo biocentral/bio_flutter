@@ -3,33 +3,18 @@ import '../model/chain.dart';
 import '../model/residue.dart';
 import '../model/secondary_structure.dart';
 
-/// Reads `_struct_conf` (kept only where `conf_type_id` starts with
-/// `HELX`) and `_struct_sheet_range` (every row counts as sheet) into
-/// [SecondaryStructureRange]s, keyed by `label_asym_id` — matching how
-/// [Chain]s are grouped in `atom_site_reader.dart` — with a fallback to
-/// `auth_asym_id` when a file only provides that.
+/// Reads helix (`_struct_conf` rows of `HELX` type) and sheet
+/// (`_struct_sheet_range`) ranges, keyed by `label_asym_id`. Files that give
+/// only `auth_asym_id` are translated through [chains].
 ///
-/// Range boundaries use the `..._label_seq_id`/`pdbx_..._PDB_ins_code`
-/// pair when present (falling back to the `auth_*` equivalents), so a
-/// residue sharing a numeric seqId with a range boundary but a different
-/// insertion code is classified correctly — see [ResidueId] and
-/// [SecondaryStructureRange.covers].
-///
-/// Returns an empty list (not null, not an error) when both categories are
-/// absent or empty — callers should treat that as "no header SS
-/// annotation available" and either leave every residue as
-/// [SecondaryStructureType.loop] or apply a geometric fallback assignment;
-/// this reader does not decide that policy.
+/// Boundaries are read in both label and author numbering; see
+/// [SecondaryStructureRange.covers]. Returns an empty list when neither
+/// category is present; the caller decides on a fallback.
 List<SecondaryStructureRange> readSecondaryStructureRanges(
   CifBlock block,
   List<Chain> chains,
 ) {
-  // A file's struct_conf/struct_sheet_range use label_asym_id in the
-  // overwhelming common case (mandatory in the current dictionary). When a
-  // minimal/older file only has the auth_asym_id variant, translate via
-  // the already-built (protein-only) chains — unambiguous as long as one
-  // auth_asym_id maps to at most one *retained* protein chain, which holds
-  // for every structure this package's scope covers.
+  // Unambiguous while each author chain name maps to one retained chain.
   final Map<String, String> authToLabel = {
     for (final chain in chains) chain.authChainId: chain.id,
   };
@@ -65,10 +50,8 @@ List<SecondaryStructureRange> readSecondaryStructureRanges(
   return ranges;
 }
 
-/// Applies [ranges] to [chains], returning new [Chain]/[Residue] instances
-/// with each residue's secondary structure set from the first covering
-/// range (matching the existing convention: first match wins), defaulting
-/// to [SecondaryStructureType.loop] when no range covers a residue.
+/// Returns [chains] with each residue's type taken from the first covering
+/// range, or [SecondaryStructureType.loop] if none covers it.
 List<Chain> applySecondaryStructure(
   List<Chain> chains,
   List<SecondaryStructureRange> ranges,
@@ -80,9 +63,7 @@ List<Chain> applySecondaryStructure(
         authChainId: chain.authChainId,
         residues: [
           for (final residue in chain.residues)
-            residue.withSecondaryStructure(
-              _typeFor(chain.id, residue.id, ranges),
-            ),
+            residue.withSecondaryStructure(_typeFor(chain.id, residue, ranges)),
         ],
       ),
   ];
@@ -90,11 +71,13 @@ List<Chain> applySecondaryStructure(
 
 SecondaryStructureType _typeFor(
   String chainId,
-  ResidueId id,
+  Residue residue,
   List<SecondaryStructureRange> ranges,
 ) {
   for (final range in ranges) {
-    if (range.covers(chainId, id)) return range.type;
+    if (range.covers(chainId, residue.id, labelSeqId: residue.labelSeqId)) {
+      return range.type;
+    }
   }
   return SecondaryStructureType.loop;
 }
@@ -107,22 +90,29 @@ SecondaryStructureRange? _rangeFromRow(
   final String? chainId =
       row['beg_label_asym_id'] ??
       _translatedAuthChain(row['beg_auth_asym_id'], authToLabel);
-  final int? beginSeq = int.tryParse(
-    row['beg_label_seq_id'] ?? row['beg_auth_seq_id'] ?? '',
-  );
-  final int? endSeq = int.tryParse(
-    row['end_label_seq_id'] ?? row['end_auth_seq_id'] ?? '',
-  );
-  if (chainId == null || beginSeq == null || endSeq == null) return null;
+  if (chainId == null) return null;
 
-  final String beginIns = row['pdbx_beg_pdb_ins_code'] ?? '';
-  final String endIns = row['pdbx_end_pdb_ins_code'] ?? '';
+  final int? beginLabel = int.tryParse(row['beg_label_seq_id'] ?? '');
+  final int? endLabel = int.tryParse(row['end_label_seq_id'] ?? '');
+  final bool hasLabel = beginLabel != null && endLabel != null;
 
+  // Insertion codes belong to author numbering only.
+  final int? beginAuth = int.tryParse(row['beg_auth_seq_id'] ?? '');
+  final int? endAuth = int.tryParse(row['end_auth_seq_id'] ?? '');
+  final bool hasAuth = beginAuth != null && endAuth != null;
+
+  if (!hasLabel && !hasAuth) return null;
   return SecondaryStructureRange(
     chainId: chainId,
-    begin: ResidueId(beginSeq, beginIns),
-    end: ResidueId(endSeq, endIns),
     type: type,
+    beginLabelSeqId: hasLabel ? beginLabel : null,
+    endLabelSeqId: hasLabel ? endLabel : null,
+    begin: hasAuth
+        ? ResidueId(beginAuth, row['pdbx_beg_pdb_ins_code'] ?? '')
+        : null,
+    end: hasAuth
+        ? ResidueId(endAuth, row['pdbx_end_pdb_ins_code'] ?? '')
+        : null,
   );
 }
 

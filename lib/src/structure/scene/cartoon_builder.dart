@@ -28,7 +28,6 @@ class RunMesh {
     required this.outlineMaterial,
     required this.outlineBasePositions,
     required this.outlineBaseNormals,
-    required this.baseColors,
     required this.residueForVertex,
   });
 
@@ -36,48 +35,26 @@ class RunMesh {
   final Node node;
   final MeshGeometry geometry;
 
-  /// This run's own material instance (also reachable via
-  /// `node.mesh.primitives.first.material`, but as the base `Material`
-  /// type, which would need a downcast) — kept here typed as
-  /// [PhysicallyBasedMaterial] so live style toggles (e.g.
-  /// [setCartoonPencilTexture]) can set its texture/factor fields
-  /// directly, the same way [setCartoonOutlineColor] mutates `node`.
+  /// This run's material, typed for live texture changes.
   final PhysicallyBasedMaterial material;
 
-  /// This run's "inverted hull" outline mesh — a child of [node] (so it
-  /// rides along with it in the scene graph automatically), hidden
-  /// (`visible = false`) until [setCartoonOutlineColor] turns it on. See
-  /// [buildCartoonScene]'s build loop for the technique.
+  /// Inverted-hull outline, a hidden child of [node] until an outline color
+  /// is set.
   final Node outlineNode;
 
-  /// [outlineNode]'s geometry — `GeometryStorage.updatable` so
-  /// [setCartoonOutlineThickness] can recompute and re-upload its inflated
-  /// positions without a full mesh rebuild.
+  /// [outlineNode]'s geometry, updatable so thickness changes need no rebuild.
   final MeshGeometry outlineGeometry;
 
-  /// [outlineNode]'s material, kept here (like [material]) so
-  /// [setCartoonOutlineColor] can set its color without downcasting.
+  /// [outlineNode]'s material, typed for live color changes.
   final UnlitMaterial outlineMaterial;
 
-  /// [outlineGeometry]'s vertex positions/normals *before* the outline
-  /// inflation offset — [setCartoonOutlineThickness] recomputes
-  /// `outlineBasePositions[i] + outlineBaseNormals[i] * thickness` from
-  /// these rather than re-deriving them (or, worse, trying to un-inflate
-  /// the geometry's current positions by whatever the previous thickness
-  /// was).
+  /// Outline positions and normals before inflation, so thickness can be
+  /// reapplied.
   final Float32List outlineBasePositions;
   final Float32List outlineBaseNormals;
 
-  /// One base (un-highlighted) secondary-structure color per residue of
-  /// [run], from [ribbonColors] — cached so recoloring always starts from
-  /// a known baseline instead of trying to read colors back out of the GPU
-  /// buffer.
-  final List<Vector4> baseColors;
-
-  /// One residue index (into `run.residues`) per vertex of [geometry], in
-  /// the exact order [geometry]'s own color buffer expects — how a
-  /// per-residue highlight override gets scattered into a vertex-color
-  /// update.
+  /// The `run.residues` index of each vertex of [geometry], for per-residue
+  /// recoloring.
   final List<int> residueForVertex;
 }
 
@@ -90,9 +67,7 @@ class CartoonScene {
   List<Node> get nodes => [for (final r in runs) r.node];
 }
 
-// 16 segments (a multiple of 8) so `ribbonUnitProfiles`'s derived
-// rectangular profile — the beta-sheet flat-ribbon cross-section — lands
-// exactly on its four corners; see that function's doc comment.
+// A multiple of 8 so the rectangular profile has exact corners.
 final ({List<Vector2> round, List<Vector2> rect}) _unitProfiles =
     ribbonUnitProfiles(segments: 16);
 
@@ -100,10 +75,7 @@ final ({List<Vector2> round, List<Vector2> rect}) _unitProfiles =
 ///
 /// Requires initialized Scene resources. Runs with fewer than two points
 /// are omitted. Secondary-structure transitions share a continuous surface.
-CartoonScene buildCartoonScene(
-  MolecularStructure structure, {
-  SecondaryStructureColorScheme? colorScheme,
-}) {
+CartoonScene buildCartoonScene(MolecularStructure structure) {
   final List<ContinuousRun> runs = buildContinuousRuns(structure);
 
   final List<RunMesh> runMeshes = [];
@@ -112,14 +84,11 @@ CartoonScene buildCartoonScene(
     final List<Vector3> points = run.residues
         .map((r) => r.alphaCarbon!.position)
         .toList();
-    // A path needs at least two distinct control points; a lone residue
-    // between two breaks can't be drawn as a ribbon and is simply
-    // skipped — it still exists in `runs` for anything that only needs
-    // residue metadata, just not for rendering/picking.
+    // A lone residue between breaks cannot form a ribbon.
     if (points.length < 2) continue;
 
     final List<ProfileSizeSample> sizes = ribbonProfileSizes(run);
-    final List<Vector4> colors = ribbonColors(run, scheme: colorScheme);
+    final List<Vector4> colors = ribbonColors(run);
     final CatmullRomPath path = CatmullRomPath(points);
     // Use the same C=O orientation signal for every secondary-structure type.
     final List<Vector3> directions = backboneOrientationVectors(run.residues);
@@ -145,15 +114,11 @@ CartoonScene buildCartoonScene(
     );
 
     final PhysicallyBasedMaterial material = PhysicallyBasedMaterial()
-      // White so the per-vertex secondary-structure color (see
-      // `ribbon_profile.dart`) shows through unmodified; `vertexColorWeight`
-      // defaults to 1.0, so it's already multiplied in.
+      // White, so vertex colors show unmodified.
       ..baseColorFactor = Vector4(1.0, 1.0, 1.0, 1.0)
       ..metallicFactor = 0.0
       ..roughnessFactor = 0.65
-      // Guarantees every surface renders from either side, so a run end
-      // (or a cap whose winding flips at a sharp spline twist) never
-      // reads as an open, see-through hole.
+      // Run ends and twisted caps must not appear as holes.
       ..doubleSided = true;
     final Node node = Node(mesh: Mesh(geometry, material))
       // Picking uses low-resolution proxies to avoid scanning ribbon triangles.
@@ -173,17 +138,12 @@ CartoonScene buildCartoonScene(
       colors: arrays.colors,
       // This generator's winding exposes the inward hull under default culling.
       indices: arrays.indices,
-      // `setCartoonOutlineThickness` re-inflates and re-uploads positions
-      // in place after construction, which needs updatable storage (like
-      // `geometry` above needs it for highlighting).
       storage: GeometryStorage.updatable,
     );
     final UnlitMaterial outlineMaterial = UnlitMaterial()
       ..vertexColorWeight = 0.0;
     final Node outlineNode = Node(mesh: Mesh(outlineGeometry, outlineMaterial))
       ..raycastable = false
-      // Hidden until `setCartoonOutlineColor` turns outlines on, matching
-      // `setCartoonPencilTexture`'s off-by-default-on-a-fresh-build shape.
       ..visible = false;
     node.add(outlineNode);
 
@@ -198,7 +158,6 @@ CartoonScene buildCartoonScene(
         outlineMaterial: outlineMaterial,
         outlineBasePositions: arrays.positions,
         outlineBaseNormals: arrays.normals,
-        baseColors: colors,
         residueForVertex: arrays.residueForVertex,
       ),
     );

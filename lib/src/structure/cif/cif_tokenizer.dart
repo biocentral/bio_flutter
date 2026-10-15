@@ -1,53 +1,29 @@
 import 'cif_token.dart';
 
-/// Scans raw CIF 1.1 text into a flat stream of [CifToken]s.
+/// Scans CIF 1.1 text into tokens, without mmCIF-specific knowledge.
 ///
-/// This is a character-level scanner with **zero mmCIF-specific
-/// knowledge** — it doesn't know what `loop_`, `data_`, or a tag are; it
-/// only knows CIF's low-level lexical rules:
+/// Lexical rules:
+///  - whitespace separates unquoted words;
+///  - a quote closes a quoted value only when followed by whitespace or the
+///    end of input, so `O5'` and `'it's fine'` need no escaping;
+///  - a `;` in column 1 opens a text field that runs verbatim until the next
+///    line starting with `;`;
+///  - `#` at a token start begins a comment, which is discarded.
 ///
-///  - whitespace (space, tab, newline) separates unquoted words;
-///  - `'...'`/`"..."` delimit a quoted value, where the closing quote must
-///    be immediately followed by whitespace or end-of-input — this is what
-///    lets an unquoted atom name like `O5'` keep its apostrophe without
-///    being misread as opening a quote, and lets a quoted value contain an
-///    embedded, non-closing apostrophe (`'it's fine'` reads as `it's
-///    fine`) with no escape syntax needed;
-///  - a `;` that is the very first character of a physical line opens a
-///    multi-line text field, which runs verbatim (including embedded
-///    whitespace, blank lines, and `#`) until a line that again starts
-///    with `;` closes it;
-///  - `#` starts a comment to end of line, but only where a new token
-///    could start (immediately after whitespace or at start of line) — a
-///    `#` embedded inside a word (impossible to reach here, since the
-///    word-scanning branch already consumes it) never triggers this;
-///  - comments are discarded entirely, not emitted as tokens, so they are
-///    fully transparent to anything consuming the token stream (including
-///    row assembly inside a `loop_` — a comment line between data rows
-///    does not interrupt them).
-///
-/// What this scanner deliberately does not implement: `save_`/`global_`
-/// frames (dictionary-file constructs, never present in RCSB coordinate
-/// files) are tokenized as ordinary words rather than recognized as
-/// keywords. That's fine for this package's input (mmCIF structure files),
-/// and is called out here rather than silently assumed.
+/// `save_` and `global_` frames are scanned as ordinary words.
 List<CifToken> tokenizeCif(String content) {
-  // Normalizing line endings up front means every other rule only has to
-  // reason about '\n'.
+  // Normalized so the rules below only handle '\n'.
   final String text = content.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
   final int len = text.length;
 
   final List<CifToken> tokens = [];
   int idx = 0;
-  // True at the very start of input and immediately after consuming '\n'.
-  // This is what makes ';' text-field detection require true column 1,
-  // not merely "first non-blank character of the line".
+  // Text fields start only at true column 1.
   bool atLineStart = true;
 
   while (idx < len) {
-    // Text field: ';' at true column 1.
     if (atLineStart && text[idx] == ';') {
-      idx++; // consume the opening ';'
+      idx++;
       final StringBuffer buffer = StringBuffer();
       bool firstLine = true;
       while (true) {
@@ -55,8 +31,6 @@ List<CifToken> tokenizeCif(String content) {
         final int contentEnd = lineEnd == -1 ? len : lineEnd;
         final String line = text.substring(idx, contentEnd);
         if (line.startsWith(';')) {
-          // Closing delimiter. Its own ';' and the line it's on are not
-          // part of the value.
           idx = lineEnd == -1 ? len : lineEnd + 1;
           atLineStart = true;
           break;
@@ -65,8 +39,7 @@ List<CifToken> tokenizeCif(String content) {
         buffer.write(_stripTrailingBlank(line));
         firstLine = false;
         if (lineEnd == -1) {
-          // Unterminated text field (no closing ';' before EOF). Lenient:
-          // take what we have rather than throwing.
+          // Unterminated text field: keep what was read.
           idx = len;
           atLineStart = true;
           break;
@@ -90,8 +63,6 @@ List<CifToken> tokenizeCif(String content) {
       continue;
     }
     if (ch == '#') {
-      // Only reached at a token-start position (see class doc) — comment
-      // to end of line, discarded.
       final int nl = text.indexOf('\n', idx);
       idx = nl == -1 ? len : nl;
       continue;
@@ -111,13 +82,12 @@ List<CifToken> tokenizeCif(String content) {
         idx++;
       }
       final String value = text.substring(start, idx);
-      if (idx < len) idx++; // consume closing quote; lenient if unterminated
+      if (idx < len) idx++;
       atLineStart = false;
       tokens.add(CifToken(CifTokenKind.quoted, value));
       continue;
     }
 
-    // Unquoted word: everything up to the next whitespace.
     final int start = idx;
     while (idx < len &&
         text[idx] != ' ' &&

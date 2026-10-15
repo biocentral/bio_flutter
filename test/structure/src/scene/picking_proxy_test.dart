@@ -71,9 +71,7 @@ void main() {
       expect(vertices, hasLength(36));
     });
 
-    // `Vector3` is Float32List-backed, so an exact-double bound like `-0.3`
-    // can come back as `-0.30000001192092896` after a round trip through
-    // float32 -- these tolerances absorb that, not real geometry slop.
+    // Vector3 is float32-backed; tolerances absorb rounding.
     const eps = 1e-5;
 
     test('every vertex stays within the box bounds along each local axis', () {
@@ -159,10 +157,7 @@ void main() {
     test(
       'each residue\'s box is centered near that residue\'s own CA position',
       () {
-        // A straight, evenly-spaced synthetic backbone has exactly uniform
-        // arc-length speed, so `computeOrientedFrames(stations: residueCount)`
-        // lands frame i exactly at residue i's position -- no approximation
-        // slack to account for here.
+        // Uniform spacing puts frame i exactly at residue i.
         final run = _straightLoopRun(5, spacing: 3.8);
         final vertices = buildPickingProxyVertices(run);
         for (int i = 0; i < 5; i++) {
@@ -209,9 +204,8 @@ void main() {
         segments: [sheet],
       );
       final vertices = buildPickingProxyVertices(run);
-      // Residue index 2 (the last of a 3-residue sheet with nothing
-      // following) tapers to a true zero-width/zero-thickness point in
-      // `ribbonProfileSizes` -- its box must still have real volume.
+      // The last residue of a terminal sheet tapers to zero size; its box must
+      // still have volume.
       final tipBox = vertices.sublist(2 * 36, 3 * 36);
       final double spreadY =
           tipBox.map((v) => v.y).reduce((a, b) => a > b ? a : b) -

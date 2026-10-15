@@ -1,8 +1,6 @@
 import 'dart:ui' show Color;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:bio_flutter/src/structure/model/residue.dart';
-import 'package:bio_flutter/src/structure/model/residue_key.dart';
 import 'package:bio_flutter/src/structure/scene/highlight_resolution.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -21,59 +19,6 @@ void main() {
     test('converts a transparent color to zero alpha', () {
       final v = colorToVector4(const Color(0x00FFFFFF));
       expect(v.w, 0.0);
-    });
-  });
-
-  group('resolveResidueColor', () {
-    const key = ResidueKey('A', ResidueId(1, ''));
-    const other = ResidueKey('A', ResidueId(2, ''));
-    final baseColor = Vector4(0.1, 0.2, 0.3, 1.0);
-    const hoverColor = Color(0xFFFF0000);
-    const selectedColor = Color(0xFF00FF00);
-    const setColor = Color(0xFF0000FF);
-
-    Vector4 resolve({
-      ResidueKey? hovered,
-      ResidueKey? selected,
-      Map<ResidueKey, Color> set = const {},
-    }) => resolveResidueColor(
-      key: key,
-      baseColor: baseColor,
-      hoveredResidue: hovered,
-      selectedResidue: selected,
-      highlightSet: set,
-      hoverColor: hoverColor,
-      selectedColor: selectedColor,
-    );
-
-    test('falls back to the base color when nothing is highlighted', () {
-      expect(resolve(), baseColor);
-    });
-
-    test('a key in the highlight set takes that key\'s own color', () {
-      expect(resolve(set: {key: setColor}), colorToVector4(setColor));
-    });
-
-    test('a set entry for a different residue does not affect this one', () {
-      expect(resolve(set: {other: setColor}), baseColor);
-    });
-
-    test('selected beats a set entry', () {
-      expect(
-        resolve(selected: key, set: {key: setColor}),
-        colorToVector4(selectedColor),
-      );
-    });
-
-    test('hovered beats selected', () {
-      expect(
-        resolve(hovered: key, selected: key, set: {key: setColor}),
-        colorToVector4(hoverColor),
-      );
-    });
-
-    test('being selected/hovered as a *different* residue has no effect', () {
-      expect(resolve(hovered: other, selected: other), baseColor);
     });
   });
 

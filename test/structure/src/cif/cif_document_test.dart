@@ -20,10 +20,8 @@ _atom_site.label_atom_id
       expect(rows[1]['label_atom_id'], 'CA');
     });
 
-    test('single-row (non-loop) key-value category — the #12 fix', () {
-      // A structure with exactly one helix legally writes struct_conf like
-      // this instead of as a loop_. Prior Dart attempts silently produced
-      // zero rows for this; this must produce exactly one.
+    test('a single-row key-value category yields one row', () {
+      // A single helix may be written as key-value pairs rather than a loop_.
       final doc = parseCifDocument('''
 data_TEST
 _struct_conf.id HELX1

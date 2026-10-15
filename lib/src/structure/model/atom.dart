@@ -1,9 +1,6 @@
 import 'package:vector_math/vector_math.dart';
 
-/// One atom record from `atom_site`, already resolved to a single
-/// conformer. Can never be one of several `label_alt_id` alternates for the same
-/// (chain, seq, insertion code, atom name). See the `atom_site` reader for
-/// the occupancy-based resolution rule.
+/// One `atom_site` atom, resolved to a single conformer.
 class Atom {
   Atom({
     required this.serial,
@@ -25,13 +22,9 @@ class Atom {
   final double occupancy;
   final double bFactor;
 
-  /// Whether the source row was written as `HETATM` rather than `ATOM`.
-  /// **Metadata only** — not the signal for "is this part of the protein
-  /// chain". Some polymer residues (e.g. a chromophore formed from
-  /// cyclized standard residues) are legitimately written as `HETATM`
-  /// while still being part of the backbone; polymer membership is decided
-  /// per-residue from entity classification instead. See the `atom_site`
-  /// reader.
+  /// Whether the source row was `HETATM`. Metadata only: polymer residues
+  /// such as a chromophore may be `HETATM`, so chain membership comes from
+  /// entity classification instead.
   final bool isHeteroRecord;
 
   bool get isAlphaCarbon => atomName == 'CA';

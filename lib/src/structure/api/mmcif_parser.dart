@@ -26,9 +26,11 @@ abstract final class MmcifParser {
   /// Parses the first data block and first encountered coordinate model.
   ///
   /// Retains amino acid chains only, resolving atom alternates by occupancy.
-  /// Uses geometric secondary structure when no usable header ranges remain.
-  /// Throws [FormatException] for invalid CIF syntax. Missing protein data
-  /// produces an empty structure, with diagnostics where available.
+  /// Uses geometric secondary structure for chains that no header range
+  /// covers.
+  /// Throws [FormatException] when the text has no data block. Malformed rows
+  /// are skipped and missing protein data produces an empty structure, with
+  /// diagnostics where available.
   ///
   /// Runs in an isolate on native platforms. On web, [compute] executes on
   /// the current event loop; large files can still block the browser UI.

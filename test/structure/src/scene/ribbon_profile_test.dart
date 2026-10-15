@@ -30,10 +30,7 @@ BackboneSegment _segment(SecondaryStructureType type, List<int> seqIds) =>
       residues: [for (final seq in seqIds) _residue(seq, seq * 3.8, type)],
     );
 
-// `ribbonProfileSizes` stores `t` normalized to the path's own 0..1 range
-// (see the comment in ribbon_profile.dart on why), not a raw residue index
-// -- this converts a residue index into that same normalized space for
-// test assertions, given a run of [totalResidues] residues.
+// Converts a residue index to the normalized t of ribbonProfileSizes.
 double _normalizedT(int residueIndex, int totalResidues) =>
     totalResidues > 1 ? residueIndex / (totalResidues - 1) : 0.0;
 
@@ -104,11 +101,7 @@ void main() {
       final normalSize =
           samples.first.size; // an unaffected, normal-width residue
 
-      // The shoulder residue itself (residue index 3 of 5) is at full flare
-      // width. Thickness stays put -- a real ribbon arrow flares in width
-      // only, not thickness (flaring both reads as a lens/box lump rather
-      // than a flat wedge, especially once the rectangular sheet profile
-      // is in play -- see `_widened` in ribbon_profile.dart).
+      // The shoulder residue is at full flare width; thickness is unchanged.
       final shoulderT = _normalizedT(3, 5);
       final shoulderSample = samples.firstWhere((s) => s.t == shoulderT);
       expect(shoulderSample.size.halfWidth, greaterThan(normalSize.halfWidth));
@@ -117,9 +110,7 @@ void main() {
         closeTo(normalSize.halfThickness, 1e-9),
       );
 
-      // A short ramp-in sample sits just before it, still at normal width --
-      // this is what keeps the flare-out sharp instead of spread across the
-      // whole preceding residue.
+      // A ramp-in sample just before it is still at normal width.
       final rampSample = samples.firstWhere(
         (s) => s.t > _normalizedT(2, 5) && s.t < shoulderT,
       );
@@ -160,11 +151,8 @@ void main() {
     );
 
     test('regression: samples span the full 0..1 path range, not a fixed per-residue step', () {
-      // A run realistically longer than a couple of residues -- if `t` were
-      // ever stored as a raw residue index instead of normalized against
-      // path length, every query in `[0, 1]` would land between the first
-      // two samples only, freezing the whole rest of the ribbon at (near)
-      // the first residue's size -- reported as "it was all tubular".
+      // In a longer run, unnormalized t would keep every query near the first
+      // residue.
       final sheet = _segment(
         SecondaryStructureType.sheet,
         List.generate(200, (i) => i + 1),
@@ -192,8 +180,7 @@ void main() {
         segments: [sheet],
       );
       final samples = ribbonProfileSizes(run);
-      // Shoulder is residue 0 -- nothing precedes it to ramp from, so just
-      // the plain per-residue samples, no crash, no negative t.
+      // The shoulder is residue 0, so there is no ramp-in sample.
       expect(samples, hasLength(2));
       expect(samples.map((s) => s.t), [0.0, 1.0]);
     });

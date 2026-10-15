@@ -73,6 +73,61 @@ _entity_poly.type
     );
   });
 
+  group('readAtomSite: label numbering', () {
+    test('label_seq_id is stored per residue alongside author numbering', () {
+      final result = _read('''
+data_TEST
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.label_seq_id
+_atom_site.auth_asym_id
+_atom_site.auth_seq_id
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+ATOM 1 C CA A 1 64 A 64 1.0 1.0 1.0
+HETATM 2 C CA1 A 1 65 A 66 2.0 2.0 2.0
+ATOM 3 C CA A 1 66 A 68 3.0 3.0 3.0
+loop_
+_entity_poly.entity_id
+_entity_poly.type
+1 polypeptide(L)
+''');
+      final residues = result.chains.single.residues;
+      expect(residues.map((r) => r.id.authSeqId), [64, 66, 68]);
+      expect(residues.map((r) => r.labelSeqId), [64, 65, 66]);
+    });
+
+    test('labelSeqId is null when the column is absent', () {
+      final result = _read('''
+data_TEST
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.auth_asym_id
+_atom_site.auth_seq_id
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+ATOM 1 C CA A 1 A 1 1.0 1.0 1.0
+loop_
+_entity_poly.entity_id
+_entity_poly.type
+1 polypeptide(L)
+''');
+      expect(result.chains.single.residues.single.labelSeqId, isNull);
+    });
+  });
+
   group('readAtomSite: coordinates', () {
     test(
       'an unparsable coordinate drops the atom, never defaults to the origin',
