@@ -4,10 +4,11 @@ version: 0.0.12
 homepage: https://github.com/biocentral/bio_flutter
 
 environment:
-  sdk: '>=3.2.2 <4.0.0'
-  flutter: ">=3.22.0"
+  sdk: ^3.14.0-111.0.dev
+  flutter: '>=3.48.0-1.0.pre'
 
 dependencies:
+  flutter_scene: 0.20.0
   async: ^2.13.1
   equatable: ^2.0.7
   fl_chart: ^1.2.0

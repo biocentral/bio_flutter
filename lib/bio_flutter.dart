@@ -2,6 +2,8 @@
 /// cross-platform representation and visualization of biological data in flutter.
 library bio_flutter;
 
+export 'protein_viewer.dart';
+
 export 'src/attributes/custom_attributes.dart';
 
 export 'src/files/bio_file_handler.dart';

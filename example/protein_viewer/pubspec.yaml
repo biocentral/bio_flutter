@@ -1,0 +1,21 @@
+name: bio_flutter_protein_viewer_example
+description: Linked sequence and structure selection using pdb_viewer.
+publish_to: none
+version: 1.0.0+1
+environment:
+  sdk: ^3.14.0-111.0.dev
+dependencies:
+  flutter:
+    sdk: flutter
+  bio_flutter:
+    path: ../../
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/2QLE.cif
+    - assets/2GBP.cif
+    - assets/AF-P02185-F1-myoglobin-no-ss.cif

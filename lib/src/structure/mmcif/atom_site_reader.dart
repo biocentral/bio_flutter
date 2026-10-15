@@ -1,0 +1,282 @@
+import 'package:vector_math/vector_math.dart';
+
+import '../cif/cif_document.dart';
+import '../model/atom.dart';
+import '../model/chain.dart';
+import '../model/residue.dart';
+import '../model/secondary_structure.dart';
+
+/// Protein chains read from `atom_site`, with warnings about skipped rows
+/// and assumptions. Malformed input produces warnings, never exceptions.
+class AtomSiteResult {
+  const AtomSiteResult(this.chains, this.warnings);
+
+  final List<Chain> chains;
+  final List<String> warnings;
+}
+
+/// Reads [block]'s `atom_site` category into protein [Chain]s.
+///
+///  - Keeps only the first model in file order, or all rows when the model
+///    column is absent.
+///  - Skips rows without a chain, author sequence number, serial, or valid
+///    coordinates, recording a warning. Atoms are never placed at the origin.
+///  - Resolves alternate locations by highest occupancy; ties go to the
+///    first row in the file.
+///  - Groups chains by `label_asym_id`, keeping file order.
+///  - Keeps only chains classified as protein; see [_classifyPolymerChains].
+AtomSiteResult readAtomSite(CifBlock block) {
+  final List<String> warnings = [];
+  final CifCategory? category = block.category('atom_site');
+  if (category == null) {
+    return const AtomSiteResult([], ['no atom_site category found']);
+  }
+  if (category.rows.isEmpty) {
+    return AtomSiteResult(const [], warnings);
+  }
+
+  final bool hasModelColumn = category.rows.any(
+    (row) => row.containsKey('pdbx_pdb_model_num'),
+  );
+  String? selectedModel;
+  if (hasModelColumn) {
+    for (final row in category.rows) {
+      final String? m = row['pdbx_pdb_model_num'];
+      if (m != null) {
+        selectedModel = m;
+        break;
+      }
+    }
+    if (selectedModel == null) {
+      warnings.add(
+        'pdbx_PDB_model_num column present but every value was null; not filtering by model',
+      );
+    }
+  }
+
+  final List<_RawAtom> rawAtoms = [];
+  for (final row in category.rows) {
+    if (selectedModel != null) {
+      final String? m = row['pdbx_pdb_model_num'];
+      if (m != null && m != selectedModel) continue;
+    }
+
+    final String? labelAsymId = row['label_asym_id'];
+    if (labelAsymId == null || labelAsymId.isEmpty) {
+      warnings.add('atom_site row missing label_asym_id; skipped');
+      continue;
+    }
+
+    final int? authSeqId = int.tryParse(row['auth_seq_id'] ?? '');
+    if (authSeqId == null) {
+      warnings.add(
+        'atom_site row in chain $labelAsymId has no parsable auth_seq_id; skipped',
+      );
+      continue;
+    }
+
+    final int? serial = int.tryParse(row['id'] ?? '');
+    if (serial == null) {
+      warnings.add(
+        'atom_site row in chain $labelAsymId, residue $authSeqId has no parsable id (serial); skipped',
+      );
+      continue;
+    }
+
+    final double? x = double.tryParse(row['cartn_x'] ?? '');
+    final double? y = double.tryParse(row['cartn_y'] ?? '');
+    final double? z = double.tryParse(row['cartn_z'] ?? '');
+    if (x == null || y == null || z == null) {
+      warnings.add(
+        'atom_site row #$serial in chain $labelAsymId, residue $authSeqId has a missing/unparsable coordinate; skipped',
+      );
+      continue;
+    }
+
+    final String insertionCode = row['pdbx_pdb_ins_code'] ?? '';
+    final String residueName =
+        row['auth_comp_id'] ?? row['label_comp_id'] ?? '';
+    final String authChainId = row['auth_asym_id'] ?? labelAsymId;
+    final String atomName = row['auth_atom_id'] ?? row['label_atom_id'] ?? '';
+    final String groupPdb = row['group_pdb'] ?? 'ATOM';
+    final double occupancy = double.tryParse(row['occupancy'] ?? '') ?? 1.0;
+    final double bFactor = double.tryParse(row['b_iso_or_equiv'] ?? '') ?? 0.0;
+
+    rawAtoms.add(
+      _RawAtom(
+        labelAsymId: labelAsymId,
+        authChainId: authChainId,
+        entityId: row['label_entity_id'],
+        residueId: ResidueId(authSeqId, insertionCode),
+        labelSeqId: int.tryParse(row['label_seq_id'] ?? ''),
+        residueName: residueName,
+        groupPdb: groupPdb,
+        atom: Atom(
+          serial: serial,
+          element: (row['type_symbol'] ?? '').trim(),
+          atomName: atomName,
+          position: Vector3(x, y, z),
+          occupancy: occupancy,
+          bFactor: bFactor,
+          isHeteroRecord: groupPdb.toUpperCase() == 'HETATM',
+        ),
+      ),
+    );
+  }
+
+  // Replacing a value keeps its key's insertion position, so atoms stay in
+  // file order whichever alternate wins.
+  final Map<(String, ResidueId, String), _RawAtom> resolved = {};
+  for (final ra in rawAtoms) {
+    final key = (ra.labelAsymId, ra.residueId, ra.atom.atomName);
+    final _RawAtom? existing = resolved[key];
+    if (existing == null || ra.atom.occupancy > existing.atom.occupancy) {
+      resolved[key] = ra;
+    }
+  }
+
+  final List<String> chainOrder = [];
+  final Map<String, List<ResidueId>> residueOrder = {};
+  final Map<String, Map<ResidueId, List<Atom>>> atomsByResidue = {};
+  final Map<String, Map<ResidueId, String>> residueNames = {};
+  final Map<String, Map<ResidueId, int?>> labelSeqIds = {};
+  final Map<String, String> authChainIdOf = {};
+  final Map<String, String?> entityIdOf = {};
+  final Map<String, bool> chainHasAtomRow = {};
+
+  for (final ra in resolved.values) {
+    final String chain = ra.labelAsymId;
+    if (!atomsByResidue.containsKey(chain)) {
+      chainOrder.add(chain);
+      atomsByResidue[chain] = {};
+      residueOrder[chain] = [];
+      residueNames[chain] = {};
+      labelSeqIds[chain] = {};
+      authChainIdOf[chain] = ra.authChainId;
+      entityIdOf[chain] = ra.entityId;
+      chainHasAtomRow[chain] = false;
+    }
+    if (ra.groupPdb.toUpperCase() == 'ATOM') chainHasAtomRow[chain] = true;
+
+    final Map<ResidueId, List<Atom>> residues = atomsByResidue[chain]!;
+    if (!residues.containsKey(ra.residueId)) {
+      residueOrder[chain]!.add(ra.residueId);
+      residueNames[chain]![ra.residueId] = ra.residueName;
+    }
+    labelSeqIds[chain]![ra.residueId] ??= ra.labelSeqId;
+    residues.putIfAbsent(ra.residueId, () => []).add(ra.atom);
+  }
+
+  final Set<String> polymerChains = _classifyPolymerChains(
+    block: block,
+    chainOrder: chainOrder,
+    entityIdOf: entityIdOf,
+    chainHasAtomRow: chainHasAtomRow,
+    warnings: warnings,
+  );
+
+  final List<Chain> chains = [
+    for (final chainId in chainOrder)
+      if (polymerChains.contains(chainId))
+        Chain(
+          id: chainId,
+          authChainId: authChainIdOf[chainId]!,
+          residues: [
+            for (final residueId in residueOrder[chainId]!)
+              Residue(
+                id: residueId,
+                name: residueNames[chainId]![residueId]!,
+                atoms: atomsByResidue[chainId]![residueId]!,
+                labelSeqId: labelSeqIds[chainId]![residueId],
+                secondaryStructure:
+                    SecondaryStructureType.loop, // assigned later
+              ),
+          ],
+        ),
+  ];
+
+  return AtomSiteResult(chains, warnings);
+}
+
+class _RawAtom {
+  _RawAtom({
+    required this.labelAsymId,
+    required this.authChainId,
+    required this.entityId,
+    required this.residueId,
+    required this.labelSeqId,
+    required this.residueName,
+    required this.groupPdb,
+    required this.atom,
+  });
+
+  final String labelAsymId;
+  final String authChainId;
+  final String? entityId;
+  final ResidueId residueId;
+  final int? labelSeqId;
+  final String residueName;
+  final String groupPdb;
+  final Atom atom;
+}
+
+/// Returns the `label_asym_id`s of protein chains.
+///
+/// Uses `_entity_poly.type` (polypeptide) when available, then `_entity.type`
+/// (polymer, with a warning because nucleic acids cannot be excluded), then
+/// whether the chain has any `ATOM` row. The last test is per chain so that
+/// polymer residues written as `HETATM`, such as a chromophore, stay in
+/// their chain.
+Set<String> _classifyPolymerChains({
+  required CifBlock block,
+  required List<String> chainOrder,
+  required Map<String, String?> entityIdOf,
+  required Map<String, bool> chainHasAtomRow,
+  required List<String> warnings,
+}) {
+  final Map<String, String>? entityType = block.category('entity') == null
+      ? null
+      : {
+          for (final row in block.category('entity')!.rows)
+            if (row['id'] != null)
+              row['id']!: (row['type'] ?? '').toLowerCase(),
+        };
+  final Map<String, String>? entityPolyType =
+      block.category('entity_poly') == null
+      ? null
+      : {
+          for (final row in block.category('entity_poly')!.rows)
+            if (row['entity_id'] != null)
+              row['entity_id']!: (row['type'] ?? '').toLowerCase(),
+        };
+
+  final Set<String> polymerChains = {};
+  for (final chain in chainOrder) {
+    final String? entityId = entityIdOf[chain];
+    final String? polyType = entityId == null
+        ? null
+        : entityPolyType?[entityId];
+    final String? plainType = entityId == null ? null : entityType?[entityId];
+
+    final bool isPolymer;
+    if (polyType != null) {
+      isPolymer = polyType.startsWith('polypeptide');
+    } else if (plainType != null) {
+      isPolymer = plainType == 'polymer';
+      if (isPolymer) {
+        warnings.add(
+          'chain $chain: classified as polymer from _entity.type alone (no _entity_poly present); '
+          'cannot rule out a nucleic acid polymer',
+        );
+      }
+    } else {
+      isPolymer = chainHasAtomRow[chain] ?? false;
+      warnings.add(
+        'chain $chain: no entity classification found; falling back to '
+        '"contains an ATOM row" heuristic',
+      );
+    }
+    if (isPolymer) polymerChains.add(chain);
+  }
+  return polymerChains;
+}

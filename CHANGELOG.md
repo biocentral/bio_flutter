@@ -1,3 +1,14 @@
+## Unreleased
+
+* Add mmCIF parsing and cartoon protein structure visualization on Linux, macOS,
+  Windows, and web, including shared selection, annotations, and camera controls.
+* Add immutable structural models, a linked sequence example, and geometry tests.
+* Raise SDK requirements to Dart 3.14 prerelease and Flutter 3.48 prerelease for
+  Flutter Scene 0.20; pin the verified Flutter revision in `.fvmrc`.
+* Add desktop/web build checks and preserve Biotite attribution for P-SEA.
+* Compute secondary structure with DSSP for chains without header annotation,
+  matching Mol* and ChimeraX; P-SEA remains the fallback for Cα-only chains.
+
 ## 0.0.12
 * Bumping fl_chart version
 

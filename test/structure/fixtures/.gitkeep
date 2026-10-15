@@ -1,0 +1,19 @@
+2QLE.cif (a real GFP-family tetramer) covers multi-chain, hetero groups,
+a HETATM-flagged polymer residue, and header-annotated secondary structure.
+
+1L2Y.cif (Trp-cage, NMR) covers multi-model selection, and is the P-SEA
+port's ground-truth fixture (matches Biotite's published output exactly).
+
+AF-P02185-F1-myoglobin.cif (a real AlphaFold model; modern AlphaFold DB
+files embed DSSP-derived _struct_conf) covers a real, mostly-alpha-helical
+fold for a much higher-agreement P-SEA comparison than 2QLE's 3-10 helices.
+AF-P02185-F1-myoglobin-no-ss.cif is the same file with _struct_conf/
+_struct_conf_type stripped, exercising the geometric SS fallback against
+real predicted-model geometry (also bundled into example/assets/, switch
+to it via the dropdown in the example app to see it render).
+
+Still missing a fixture: a residue whose only resolved altloc isn't 'A',
+and a structure whose struct_conf/struct_sheet_range is written as
+single-row key-value rather than loop_ (RCSB always uses loop_ even for
+one row, so this needs a hand-built or non-RCSB file — currently only
+exercised synthetically in test/src/cif/), and insertion codes.
