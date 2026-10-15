@@ -2,7 +2,7 @@ import '../cif/cif_document.dart';
 import '../model/chain.dart';
 import '../model/molecular_structure.dart';
 import '../model/secondary_structure.dart';
-import '../ss/p_sea.dart';
+import '../ss/geometric_secondary_structure.dart';
 import 'atom_site_reader.dart';
 import 'secondary_structure_reader.dart';
 
@@ -16,8 +16,9 @@ class MmcifParseResult {
 
 /// Parses the first mmCIF data block into amino acid chains.
 ///
-/// Uses geometric secondary structure for chains that no header range
-/// covers. Throws [FormatException] when there is no data block.
+/// Computes secondary structure from coordinates for chains that no header
+/// range covers; see [assignGeometricSecondaryStructure]. Throws
+/// [FormatException] when there is no data block.
 MmcifParseResult parseMmcifStructure(String content) {
   final CifDocument document = parseCifDocument(content);
   final CifBlock? block = document.firstBlock;
@@ -51,7 +52,7 @@ MmcifParseResult parseMmcifStructure(String content) {
       if (uncovered[i]) {
         warnings.add(
           'chain ${fromHeader[i].id}: no header secondary-structure range '
-          'covers a residue; using geometric assignment',
+          'covers a residue; computing secondary structure from coordinates',
         );
       }
     }

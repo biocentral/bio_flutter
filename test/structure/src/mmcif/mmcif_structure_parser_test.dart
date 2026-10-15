@@ -5,8 +5,7 @@ import 'package:bio_flutter/src/structure/mmcif/mmcif_structure_parser.dart';
 import 'package:bio_flutter/src/structure/model/secondary_structure.dart';
 import 'package:bio_flutter/src/structure/scene/backbone_segment.dart'
     show buildContinuousRuns;
-import 'package:bio_flutter/src/structure/ss/p_sea.dart'
-    show assignGeometricSecondaryStructure;
+import 'package:bio_flutter/src/structure/ss/geometric_secondary_structure.dart';
 
 /// Hides the header SS categories so the parser falls back to geometry,
 /// reusing a real fixture's coordinates.
@@ -48,11 +47,13 @@ String _withUnannotatedSecondChain(String content) {
   return lines.join('\n');
 }
 
-/// Biotite's published P-SEA assignment for 1L2Y; see p_sea_test.dart.
-final List<SecondaryStructureType> _pSea1L2Y = [
+/// ChimeraX's DSSP assignment for 1L2Y; see dssp_test.dart.
+final List<SecondaryStructureType> _dssp1L2Y = [
   SecondaryStructureType.loop,
-  ...List.filled(8, SecondaryStructureType.helix),
-  ...List.filled(11, SecondaryStructureType.loop),
+  ...List.filled(7, SecondaryStructureType.helix),
+  ...List.filled(2, SecondaryStructureType.loop),
+  ...List.filled(4, SecondaryStructureType.helix),
+  ...List.filled(6, SecondaryStructureType.loop),
 ];
 
 void main() {
@@ -144,7 +145,7 @@ _struct_conf.end_label_seq_id 2
       final types = result.structure.chains.single.residues
           .map((r) => r.secondaryStructure)
           .toList();
-      expect(types, _pSea1L2Y);
+      expect(types, _dssp1L2Y);
       expect(
         result.warnings,
         contains(contains('chain A: no header secondary-structure range')),
@@ -164,7 +165,7 @@ _struct_conf.end_label_seq_id 2
         ...List.filled(15, SecondaryStructureType.helix),
         ...List.filled(5, SecondaryStructureType.loop),
       ]);
-      expect(typesOf('B'), _pSea1L2Y);
+      expect(typesOf('B'), _dssp1L2Y);
       expect(
         result.warnings.where((w) => w.contains('secondary-structure range')),
         [contains('chain B:')],

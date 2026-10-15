@@ -25,10 +25,10 @@ Atom _ca(double x) => Atom(
 );
 
 void main() {
-  group('assignGeometricSecondaryStructure: degenerate inputs', () {
+  group('assignPseaSecondaryStructure: degenerate inputs', () {
     test('an empty structure does not throw', () {
       expect(
-        assignGeometricSecondaryStructure(MolecularStructure(chains: [])),
+        assignPseaSecondaryStructure(MolecularStructure(chains: [])),
         isEmpty,
       );
     });
@@ -47,7 +47,7 @@ void main() {
             ),
         ],
       );
-      final result = assignGeometricSecondaryStructure(
+      final result = assignPseaSecondaryStructure(
         MolecularStructure(chains: [chain]),
       );
       expect(
@@ -73,15 +73,13 @@ void main() {
         ],
       );
       expect(
-        () => assignGeometricSecondaryStructure(
-          MolecularStructure(chains: [chain]),
-        ),
+        () => assignPseaSecondaryStructure(MolecularStructure(chains: [chain])),
         returnsNormally,
       );
     });
   });
 
-  group('assignGeometricSecondaryStructure: real fixtures', () {
+  group('assignPseaSecondaryStructure: real fixtures', () {
     test('1L2Y (Trp-cage, NMR, model 1 only): matches the documented reference output exactly', () {
       final content = File('test/structure/fixtures/1L2Y.cif')
           .readAsStringSync();
@@ -89,7 +87,7 @@ void main() {
       expect(parsed.structure.chains, hasLength(1));
       expect(parsed.structure.chains.single.residues, hasLength(20));
 
-      final result = assignGeometricSecondaryStructure(parsed.structure);
+      final result = assignPseaSecondaryStructure(parsed.structure);
       final types = result.single.residues
           .map((r) => r.secondaryStructure)
           .toList();
@@ -128,7 +126,7 @@ void main() {
           isNotEmpty,
         );
 
-        final geometric = assignGeometricSecondaryStructure(parsed.structure);
+        final geometric = assignPseaSecondaryStructure(parsed.structure);
         final (int agree, int total) = _agreementOn(
           parsed.structure.chains,
           geometric,
@@ -164,7 +162,7 @@ void main() {
         isNotEmpty,
       );
 
-      final geometric = assignGeometricSecondaryStructure(parsed.structure);
+      final geometric = assignPseaSecondaryStructure(parsed.structure);
       final (int agree, int total) = _agreementOn(
         parsed.structure.chains,
         geometric,
@@ -196,7 +194,7 @@ void main() {
         isNotEmpty,
       );
 
-      final geometric = assignGeometricSecondaryStructure(parsed.structure);
+      final geometric = assignPseaSecondaryStructure(parsed.structure);
       final (int agree, int total) = _agreementOn(
         parsed.structure.chains,
         geometric,
@@ -210,44 +208,6 @@ void main() {
         greaterThan(0.75),
         reason:
             'header/geometric helix agreement was $agreement ($agree/$total)',
-      );
-    });
-  });
-
-  group('assignGeometricSecondaryStructure: real fixture with headers stripped (fallback path)', () {
-    test('myoglobin with no _struct_conf at all: parseMmcifStructure actually runs the fallback', () {
-      // The myoglobin fixture with its _struct_conf blocks removed, simulating
-      // header-less AlphaFold output.
-      final content = File(
-        'test/structure/fixtures/AF-P02185-F1-myoglobin-no-ss.cif',
-      ).readAsStringSync();
-      final document = parseCifDocument(content);
-      expect(document.firstBlock!.category('struct_conf'), isNull);
-
-      final result = parseMmcifStructure(content);
-      final directlyAssigned = assignGeometricSecondaryStructure(
-        result.structure,
-      );
-      expect(
-        result.structure.chains.single.residues.map(
-          (r) => r.secondaryStructure,
-        ),
-        directlyAssigned.single.residues.map((r) => r.secondaryStructure),
-      );
-
-      // Sanity check against the known fold: myoglobin is essentially all
-      // alpha helix (globin fold, 8 helices). Observed: 108/154 residues.
-      final helixFraction =
-          result.structure.chains.single.residues
-              .where(
-                (r) => r.secondaryStructure == SecondaryStructureType.helix,
-              )
-              .length /
-          result.structure.chains.single.residues.length;
-      expect(
-        helixFraction,
-        greaterThan(0.5),
-        reason: 'helix fraction was $helixFraction',
       );
     });
   });
