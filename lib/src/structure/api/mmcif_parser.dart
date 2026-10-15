@@ -26,8 +26,9 @@ abstract final class MmcifParser {
   /// Parses the first data block and first encountered coordinate model.
   ///
   /// Retains amino acid chains only, resolving atom alternates by occupancy.
-  /// Uses geometric secondary structure for chains that no header range
-  /// covers.
+  /// Chains that no header secondary-structure range covers get an
+  /// assignment computed from backbone hydrogen bonds (DSSP), as in Mol* and
+  /// ChimeraX, or from Cα geometry (P-SEA) for Cα-only chains.
   /// Throws [FormatException] when the text has no data block. Malformed rows
   /// are skipped and missing protein data produces an empty structure, with
   /// diagnostics where available.

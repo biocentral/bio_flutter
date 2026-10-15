@@ -1,7 +1,8 @@
 /// A per-residue secondary-structure label.
 ///
-/// From header annotation, [helix] covers any depositor helix type (alpha,
-/// 3₁₀, or pi). From the geometric fallback, it means alpha helix only.
+/// [helix] covers alpha, 3₁₀, and pi helices, whether they come from the
+/// header or are computed with DSSP. The P-SEA fallback for Cα-only chains
+/// detects alpha helices only.
 enum SecondaryStructureType { loop, helix, sheet }
 
 /// One header secondary-structure range of one chain, inclusive.

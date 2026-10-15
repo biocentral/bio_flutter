@@ -1,4 +1,5 @@
-// Adapted from Biotite's annotate_sse implementation. See THIRD_PARTY_NOTICES.md.
+// Adapted from Biotite's annotate_sse implementation. See
+// THIRD_PARTY_NOTICES.md.
 import 'package:vector_math/vector_math.dart';
 
 import '../model/chain.dart';
@@ -8,10 +9,9 @@ import '../model/secondary_structure.dart';
 import '../scene/backbone_segment.dart' show sequenceGapInfo;
 import 'vector_geometry.dart';
 
-/// Assigns secondary structure from Cα geometry using a P-SEA-style method.
-///
-/// The method uses distances and dihedral angles, without hydrogen-bond
-/// analysis. It is intended for mmCIF files without header annotations.
+// Assigns secondary structure from Cα geometry using a P-SEA-style method.
+// The method uses distances and dihedral angles, without hydrogen-bond
+// analysis, so it also works for chains with only Cα atoms.
 
 // Geometric thresholds, converted to radians where needed.
 
@@ -38,10 +38,11 @@ bool _inRange(double? value, (double, double) range) =>
 
 /// Assigns a secondary-structure type to every residue in [structure].
 ///
-/// Chains are processed independently and windows never cross sequence gaps
-/// or residues without Cα, which remain loops. Contact checks use Cα atoms
-/// from all chains.
-List<Chain> assignGeometricSecondaryStructure(MolecularStructure structure) {
+/// Used for chains with only Cα atoms, which DSSP cannot handle. Chains are
+/// processed independently and windows never cross sequence gaps or
+/// residues without Cα, which remain loops. Contact checks use Cα atoms from
+/// all chains.
+List<Chain> assignPseaSecondaryStructure(MolecularStructure structure) {
   final List<Vector3> allResolvedCaPositions = [
     for (final atom in structure.atoms)
       if (atom.isAlphaCarbon) atom.position,
@@ -236,7 +237,8 @@ List<bool> _extendRegion(List<bool> base, List<bool> extension) {
 
 /// Marks candidate regions with at least [minContacts] nearby Cα contacts.
 ///
-/// The distance search is quadratic in the number of candidate and contact points.
+/// The distance search is quadratic in the number of candidate and contact
+/// points.
 List<bool> _maskRegionsWithContacts({
   required List<Vector3?> positions,
   required List<bool> candidateMask,

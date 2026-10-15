@@ -8,7 +8,7 @@ model. Flutter Scene objects remain under `lib/src` and are not public API.
 | `api/` | Consumer widget, configuration, camera commands, asynchronous parser |
 | `model/` | Immutable structural data and residue identity |
 | `cif/`, `mmcif/` | CIF syntax and protein interpretation |
-| `ss/` | Geometric secondary-structure assignment |
+| `ss/` | Secondary structure from coordinates: DSSP, with P-SEA for Cα-only chains |
 | `interaction/` | Controlled/uncontrolled selection transitions |
 | `scene/` | Geometry, camera, hit proxies, GPU updates |
 
